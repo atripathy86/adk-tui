@@ -1,3 +1,5 @@
 node_modules
 opencode
 adk-tui
+dist/
+*.map

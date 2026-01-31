@@ -1,4 +1,3 @@
-import { Box, Text } from "@opentui/core";
 import { createResource, Show, For, onMount, createSignal } from "solid-js";
 import { adkClient } from "../../sdk/client";
 import { ThemeProvider, useTheme } from "../context/theme";
@@ -19,7 +18,7 @@ function MainContent() {
   const keybind = useKeybind();
 
   return (
-    <Box 
+    <box 
       borderStyle="single" 
       borderColor={ctx.theme.border} 
       padding={1} 
@@ -27,32 +26,32 @@ function MainContent() {
       width="100%"
       height="100%"
     >
-      <Box flexDirection="row" alignItems="center" gap={2} marginBottom={1}>
+      <box flexDirection="row" alignItems="center" gap={2} marginBottom={1}>
         <Logo />
-        <Box flexDirection="column">
-          <Text color={ctx.theme.primary} bold>ADK TUI Client</Text>
-          <Text color={ctx.theme.secondary}>Connected to: http://ai02.labs.hpecorp.net:8087</Text>
-        </Box>
-      </Box>
+        <box flexDirection="column">
+          <text fg={ctx.theme.primary} bold>ADK TUI Client</text>
+          <text fg={ctx.theme.secondary}>Connected to: http://ai02.labs.hpecorp.net:8087</text>
+        </box>
+      </box>
       
-      <Box marginTop={1} flexDirection="column">
-        <Show when={!apps.loading} fallback={<Text color={ctx.theme.textMuted}>Loading apps...</Text>}>
-          <Text underline color={ctx.theme.text} marginBottom={1}>Available Apps:</Text>
+      <box marginTop={1} flexDirection="column">
+        <Show when={!apps.loading} fallback={<text fg={ctx.theme.textMuted}>Loading apps...</text>}>
+          <text underline fg={ctx.theme.text} marginBottom={1}>Available Apps:</text>
           <For each={apps()}>{(app) => (
-            <Text color={ctx.theme.text}>• {app}</Text>
+            <text fg={ctx.theme.text}>• {app}</text>
           )}</For>
         </Show>
-      </Box>
+      </box>
 
-      <Box marginTop={2} flexDirection="column">
-        <Text color={ctx.theme.textMuted}>
+      <box marginTop={2} flexDirection="column">
+        <text fg={ctx.theme.textMuted}>
           Press {keybind.print("command_palette")} for command palette
-        </Text>
-        <Text color={ctx.theme.textMuted}>
+        </text>
+        <text fg={ctx.theme.textMuted}>
           Press {keybind.print("quit")} to quit
-        </Text>
-      </Box>
-    </Box>
+        </text>
+      </box>
+    </box>
   );
 }
 
