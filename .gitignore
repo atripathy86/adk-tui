@@ -3,3 +3,4 @@ opencode
 adk-tui
 dist/
 *.map
+.sisyphus
