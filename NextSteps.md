@@ -2,24 +2,52 @@
 
 This document outlines the planned development phases to bring ADK TUI to feature parity with OpenCode's TUI experience.
 
+---
+
+## Completed Work
+
+### Build System Fixed ✅
+**Date**: Jan 26, 2026
+
+The TUI now builds and runs correctly. The JSX runtime issues have been resolved.
+
+**What was done**:
+- Created custom `scripts/solid-plugin.ts` with `delegateEvents: false` to prevent browser-only DOM event delegation code
+- Added `build.ts` using Bun.build() API (matches OpenCode's approach)
+- Pinned `solid-js` to 1.9.9 to match `@opentui/solid` peer dependency
+- Fixed KV context `get()` to support default values
+
+**Root cause**: `babel-preset-solid` generates `delegateEvents()` calls for DOM event delegation which requires `window.document` (browser-only). The `@opentui/solid` library handles events differently via `node.on()`.
+
+### Core Infrastructure ✅
+- Theme system with 32 themes (`src/tui/context/theme.tsx`)
+- Dialog system (`src/tui/ui/dialog.tsx`, `src/tui/ui/dialog-select.tsx`)
+- Command palette (`src/tui/components/dialog-command.tsx`)
+- Keybind system (`src/tui/context/keybind.tsx`)
+- ADK SDK client (`src/sdk/client.ts`)
+- All context providers wired up
+
+### Working Features ✅
+- TUI renders with ADK logo
+- Connects to ADK server and lists available apps
+- Theme switching works
+- Keybind display works
+
+---
+
 ## Phase 1: Core Interaction (High Priority)
 
 ### 1.1 Command Palette & Keybindings
-**Status**: Keybind context ported, needs wiring
+**Status**: ✅ Keybind context ported and wired
 
-**Tasks**:
-- [ ] Wire up `keybind.tsx` to the main App component
-- [ ] Implement command palette dialog (`Ctrl+P`)
-- [ ] Add core keybindings:
+**Remaining Tasks**:
+- [ ] Test command palette dialog (`Ctrl+P`)
+- [ ] Verify all keybindings work:
   - `Ctrl+C` - Exit / Cancel operation
   - `Ctrl+P` - Open command palette
   - `Ctrl+N` - New session
   - `Ctrl+L` - Clear screen
   - `Ctrl+T` - Switch theme
-
-**Files to create/modify**:
-- `src/tui/components/dialog-command.tsx` - Command palette UI
-- `src/tui/context/keybind.tsx` - Already ported, needs integration
 
 ### 1.2 Chat Prompt Input
 **Status**: Not started
@@ -136,17 +164,14 @@ GET /apps/{app}/users/{user}/sessions/{session}/artifacts/{name}
 ## Phase 4: Polish & UX (Medium Priority)
 
 ### 4.1 Dialogs
-**Status**: Not started
+**Status**: ✅ Base dialog system ported
 
-**Tasks**:
-- [ ] Port dialog system from OpenCode
+**Remaining Tasks**:
 - [ ] Implement app selector dialog
 - [ ] Add confirmation dialogs
 - [ ] Create alert/error dialogs
 
 **Files to create**:
-- `src/tui/ui/dialog.tsx` - Base dialog component
-- `src/tui/ui/dialog-select.tsx` - Selection dialog
 - `src/tui/ui/dialog-alert.tsx` - Alert dialog
 - `src/tui/components/dialog-app.tsx` - App selector
 
@@ -225,6 +250,24 @@ For the fastest path to a usable product:
 - [ ] Write unit tests for SDK client
 - [ ] Add error boundaries throughout the app
 - [ ] Implement proper cleanup on exit
+
+---
+
+## Build & Run
+
+```bash
+# Install dependencies
+bun install
+
+# Build executable
+bun run build
+
+# Run the TUI
+./adk-tui
+
+# Development mode (without compiling)
+bun run dev
+```
 
 ---
 

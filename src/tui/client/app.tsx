@@ -1,5 +1,5 @@
 import { createResource, Show, For, onMount, createSignal } from "solid-js";
-import { adkClient } from "../../sdk/client";
+import { useSDK } from "../context/sdk";
 import { ThemeProvider, useTheme } from "../context/theme";
 import { SDKProvider } from "../context/sdk";
 import { KVProvider } from "../context/kv";
@@ -10,9 +10,13 @@ import { CommandProvider } from "../context/command";
 import { Logo } from "../components/logo";
 
 function MainContent() {
-  const [apps] = createResource(async () => {
-    return await adkClient.listApps();
-  });
+  const sdk = useSDK();
+  const [apps] = createResource(
+    () => sdk.serverUrl(),
+    async () => {
+      return await sdk.client.listApps();
+    }
+  );
   
   const ctx = useTheme();
   const keybind = useKeybind();
@@ -30,22 +34,39 @@ function MainContent() {
         <Logo />
         <box flexDirection="column">
           <text fg={ctx.theme.primary} bold>ADK TUI Client</text>
-          <text fg={ctx.theme.secondary}>Connected to: http://ai02.labs.hpecorp.net:8087</text>
+          <text fg={sdk.isConnected() ? ctx.theme.success : ctx.theme.warning}>
+            {sdk.isConnected() ? "Connected to: " : "Connecting to: "}{sdk.serverUrl()}
+          </text>
         </box>
       </box>
       
       <box marginTop={1} flexDirection="column">
         <Show when={!apps.loading} fallback={<text fg={ctx.theme.textMuted}>Loading apps...</text>}>
-          <text underline fg={ctx.theme.text} marginBottom={1}>Available Apps:</text>
-          <For each={apps()}>{(app) => (
-            <text fg={ctx.theme.text}>• {app}</text>
-          )}</For>
+          <Show 
+            when={sdk.isConnected() && apps() && apps()!.length > 0}
+            fallback={
+              <Show 
+                when={sdk.connectionError()}
+                fallback={<text fg={ctx.theme.textMuted}>No apps available</text>}
+              >
+                <text fg={ctx.theme.error}>Error: {sdk.connectionError()}</text>
+              </Show>
+            }
+          >
+            <text underline fg={ctx.theme.text} marginBottom={1}>Available Apps:</text>
+            <For each={apps()}>{(app) => (
+              <text fg={ctx.theme.text}>• {app}</text>
+            )}</For>
+          </Show>
         </Show>
       </box>
 
       <box marginTop={2} flexDirection="column">
         <text fg={ctx.theme.textMuted}>
           Press {keybind.print("command_palette")} for command palette
+        </text>
+        <text fg={ctx.theme.textMuted}>
+          Type /connect in palette to change server
         </text>
         <text fg={ctx.theme.textMuted}>
           Press {keybind.print("quit")} to quit

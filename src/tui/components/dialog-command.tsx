@@ -2,6 +2,7 @@ import { createMemo } from "solid-js"
 import { DialogSelect, type DialogSelectOption } from "../ui/dialog-select"
 import { useDialog } from "../ui/dialog"
 import { useTheme, DEFAULT_THEMES } from "../context/theme"
+import { DialogConnect } from "./dialog-connect"
 
 export interface Command {
   id: string
@@ -22,12 +23,21 @@ export function DialogCommand(props: DialogCommandProps) {
 
   const builtInCommands: Command[] = [
     {
+      id: "server:connect",
+      title: "/connect",
+      category: "Server",
+      description: "Connect to ADK server",
+      action: () => {
+        dialog.replace(() => <DialogConnect />)
+      },
+    },
+    {
       id: "theme:switch",
       title: "Switch Theme",
       category: "Theme",
       description: "Open theme picker",
       action: () => {
-        dialog.replace(<ThemePicker />)
+        dialog.replace(() => <ThemePicker />)
       },
     },
     {

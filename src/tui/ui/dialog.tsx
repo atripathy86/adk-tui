@@ -1,5 +1,5 @@
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
-import { batch, createContext, Show, useContext, type JSX, type ParentProps } from "solid-js"
+import { batch, createContext, createMemo, Show, useContext, type JSX, type ParentProps } from "solid-js"
 import { useTheme } from "../context/theme"
 import { Renderable, RGBA } from "@opentui/core"
 import { createStore } from "solid-js/store"
@@ -42,10 +42,13 @@ export function Dialog(
   )
 }
 
+// Factory function type - returns JSX when called (deferred evaluation)
+export type DialogFactory = () => JSX.Element
+
 function init() {
   const [store, setStore] = createStore({
     stack: [] as {
-      element: JSX.Element
+      factory: DialogFactory
       onClose?: () => void
     }[],
     size: "medium" as "medium" | "large",
@@ -92,7 +95,7 @@ function init() {
       })
       refocus()
     },
-    replace(input: any, onClose?: () => void) {
+    replace(factory: DialogFactory, onClose?: () => void) {
       if (store.stack.length === 0) {
         focus = renderer.currentFocusedRenderable
         focus?.blur()
@@ -100,13 +103,15 @@ function init() {
       for (const item of store.stack) {
         if (item.onClose) item.onClose()
       }
-      setStore("size", "medium")
-      setStore("stack", [
-        {
-          element: input,
-          onClose,
-        },
-      ])
+      batch(() => {
+        setStore("size", "medium")
+        setStore("stack", [
+          {
+            factory,
+            onClose,
+          },
+        ])
+      })
     },
     get stack() {
       return store.stack
@@ -126,18 +131,26 @@ const ctx = createContext<DialogContext>()
 
 export function DialogProvider(props: ParentProps) {
   const value = init()
+  const hasDialog = createMemo(() => value.stack.length > 0)
+  
   return (
     <ctx.Provider value={value}>
       {props.children}
       <box position="absolute">
-        <Show when={value.stack.length}>
+        <Show when={hasDialog()}>
           <Dialog onClose={() => value.clear()} size={value.size}>
-            {value.stack.at(-1)!.element}
+            <DialogContent stack={value.stack} />
           </Dialog>
         </Show>
       </box>
     </ctx.Provider>
   )
+}
+
+function DialogContent(props: { stack: { factory: DialogFactory; onClose?: () => void }[] }) {
+  const top = props.stack.at(-1)
+  if (!top) return null
+  return <>{top.factory()}</>
 }
 
 export function useDialog() {

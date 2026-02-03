@@ -1,8 +1,13 @@
-import { createContext, useContext, type JSX, type ParentProps } from "solid-js"
+import { createContext, useContext, type ParentProps } from "solid-js"
 import { useKeyboard } from "@opentui/solid"
 import { useKeybind } from "./keybind"
 import { useDialog } from "../ui/dialog"
 import { DialogCommand, type Command } from "../components/dialog-command"
+
+// const logFile = "/tmp/adk-tui-debug.log"
+// function log(msg: string) {
+//   appendFileSync(logFile, `[${new Date().toISOString()}] ${msg}\n`)
+// }
 
 interface CommandContextValue {
   open: () => void
@@ -18,7 +23,7 @@ export function CommandProvider(props: ParentProps<{ additionalCommands?: Comman
   const commands: Command[] = props.additionalCommands ?? []
 
   function openCommandPalette() {
-    dialog.replace(<DialogCommand commands={commands} />)
+    dialog.replace(() => <DialogCommand commands={commands} />)
   }
 
   useKeyboard((evt) => {
@@ -30,7 +35,7 @@ export function CommandProvider(props: ParentProps<{ additionalCommands?: Comman
 
     if (keybind.match("theme_list", evt)) {
       evt.preventDefault()
-      dialog.replace(<DialogCommand commands={commands} />)
+      dialog.replace(() => <DialogCommand commands={commands} />)
       return
     }
 
