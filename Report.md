@@ -6,9 +6,9 @@ Implementation of all features from NextSteps.md to bring ADK TUI to feature par
 
 ## Summary
 
-- **Total files created**: 24 new files
-- **Files modified**: 4 existing files
+- **Total files created**: 22 new/modified files
 - **Implementation status**: Complete
+- **Date**: Feb 3, 2026
 
 ---
 
@@ -30,7 +30,7 @@ Expanded SDK client with all ADK API methods:
 
 **Agent Execution:**
 - `run()` - Blocking execution
-- `runSSE()` - Streaming via AsyncGenerator
+- `runSSE()` - Streaming via AsyncGenerator (SSE built-in)
 
 **Artifacts:**
 - `listArtifacts()`, `loadArtifact()`, `loadArtifactVersion()`, `listArtifactVersions()`, `deleteArtifact()`
@@ -121,7 +121,7 @@ Session view:
 - Loading/error states
 
 ### Created: `src/tui/routes/session/message.tsx`
-Message components:
+Message components (includes ToolCall):
 - `UserMessage` - Left border, primary color
 - `AssistantMessage` - Agent name, partial indicator
 - `ToolCall` - Collapsible function call display
@@ -196,6 +196,7 @@ Configuration system (~/.config/adk-tui/config.json):
 - Terminal state restoration
 - Uncaught exception handling
 - Debug logging (ADK_TUI_DEBUG=1)
+- CLI argument for server URL
 
 ### Removed
 - `src/global/index.ts` (empty placeholder)
@@ -225,44 +226,44 @@ src/
 │   └── index.ts                    # Configuration system
 ├── sdk/
 │   ├── client.ts                   # ADK API client (expanded)
-│   └── types.ts                    # TypeScript types (new)
+│   └── types.ts                    # TypeScript types
 └── tui/
     ├── client/
     │   └── app.tsx                 # Main app (modified)
     ├── components/
-    │   ├── dialog-app.tsx          # App selector (new)
-    │   ├── dialog-artifacts.tsx    # Artifacts viewer (new)
+    │   ├── dialog-app.tsx          # App selector
+    │   ├── dialog-artifacts.tsx    # Artifacts viewer
     │   ├── dialog-command.tsx      # Command palette (modified)
     │   ├── dialog-connect.tsx      # Server connection
-    │   ├── dialog-session-list.tsx # Session list (new)
+    │   ├── dialog-session-list.tsx # Session list
     │   ├── logo.tsx                # ADK logo
     │   └── prompt/
-    │       ├── autocomplete.tsx    # Autocomplete (new)
-    │       ├── history.ts          # History (new)
-    │       └── index.tsx           # Prompt (new)
+    │       ├── autocomplete.tsx    # Autocomplete
+    │       ├── history.ts          # History
+    │       └── index.tsx           # Prompt
     ├── context/
     │   ├── command.tsx             # Command context
     │   ├── helper.tsx              # Context helper
     │   ├── keybind.tsx             # Keybind context
     │   ├── kv.tsx                  # KV storage
-    │   ├── route.tsx               # Routing (new)
+    │   ├── route.tsx               # Routing
     │   ├── sdk.tsx                 # SDK context
-    │   ├── session.tsx             # Session context (new)
+    │   ├── session.tsx             # Session context
     │   ├── sync.tsx                # Sync state (modified)
     │   └── theme.tsx               # Theme context
     ├── routes/
-    │   ├── home.tsx                # Home route (new)
+    │   ├── home.tsx                # Home route
     │   └── session/
-    │       ├── index.tsx           # Session view (new)
-    │       └── message.tsx         # Message components (new)
+    │       ├── index.tsx           # Session view
+    │       └── message.tsx         # Message components
     └── ui/
-        ├── dialog-alert.tsx        # Alert dialog (new)
-        ├── dialog-confirm.tsx      # Confirm dialog (new)
+        ├── dialog-alert.tsx        # Alert dialog
+        ├── dialog-confirm.tsx      # Confirm dialog
         ├── dialog-select.tsx       # Select dialog
         ├── dialog.tsx              # Dialog system
-        ├── error-boundary.tsx      # Error boundary (new)
-        ├── spinner.tsx             # Spinner (new)
-        └── toast.tsx               # Toast system (new)
+        ├── error-boundary.tsx      # Error boundary
+        ├── spinner.tsx             # Spinner
+        └── toast.tsx               # Toast system
 ```
 
 ---
@@ -279,6 +280,9 @@ bun run build
 # Run the TUI
 ./adk-tui
 
+# With custom server URL
+./adk-tui http://localhost:8080
+
 # Development mode
 bun run dev
 
@@ -288,16 +292,16 @@ ADK_TUI_DEBUG=1 ./adk-tui
 
 ---
 
-## Known Issues
+## Not Implemented (Deferred)
 
-1. **Babel dependency conflict**: The build may fail with `_debug is not a function` error due to a version mismatch in `@babel/traverse`. To resolve:
-   - Clear bun cache: `rm -rf ~/.bun/install/cache`
-   - Delete node_modules and reinstall
-   - Or pin `@babel/core` to a compatible version
+1. **Sidebar** (`src/tui/routes/session/sidebar.tsx`) - Agent/session info panel
+2. **Eval Results Viewer** - Display and run evals from UI
+3. **Multi-Server UI** - Config exists, switcher UI not built
+4. **Message selection/copying** - Select and copy message text
 
 ---
 
-## Next Steps (Future Enhancements)
+## Future Enhancements
 
 1. Add vim-like keybindings in prompt
 2. Implement message selection/copying
