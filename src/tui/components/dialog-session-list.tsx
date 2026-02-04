@@ -5,6 +5,14 @@ import { useSession } from "../context/session";
 import { useSync } from "../context/sync";
 import { useKeybind } from "../context/keybind";
 
+const DEBUG = process.env.ADK_TUI_DEBUG === "1";
+function log(msg: string) {
+  if (!DEBUG) return;
+  const { appendFileSync } = require("fs");
+  const line = `[DialogSessionList] ${msg}\n`;
+  appendFileSync("/tmp/adk-tui-debug.log", line);
+}
+
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000);
   const now = new Date();
@@ -52,15 +60,35 @@ export function DialogSessionList() {
   const sync = useSync();
   const keybind = useKeybind();
 
+  log("DialogSessionList created");
+  log(`currentApp: ${sync.data.currentApp}`);
+  log(`sessions count: ${sync.data.sessions.length}`);
+
   const options = createMemo((): DialogSelectOption<string>[] => {
+    log("options memo evaluating");
+    // Check if app is selected
+    if (!sync.data.currentApp) {
+      log("No app selected");
+      return [
+        {
+          title: "No app selected",
+          value: "",
+          description: "Please select an app first using /app",
+          disabled: true,
+        },
+      ];
+    }
+
     const sessions = sync.data.sessions;
+    log(`Found ${sessions.length} sessions`);
 
     if (sessions.length === 0) {
+      log("No sessions yet");
       return [
         {
           title: "No sessions yet",
           value: "",
-          description: "Start a new conversation",
+          description: "Start a new conversation with /new",
           disabled: true,
         },
       ];
@@ -83,16 +111,20 @@ export function DialogSessionList() {
   });
 
   const handleSelect = async (option: DialogSelectOption<string>) => {
+    log(`handleSelect: ${option.value}`);
     if (!option.value || option.disabled) return;
     await session.switch(option.value);
     dialog.clear();
   };
 
   const handleDelete = async (option: DialogSelectOption<string>) => {
+    log(`handleDelete: ${option.value}`);
     if (!option.value || option.disabled) return;
     await session.delete(option.value);
     // Refresh the dialog
   };
+
+  log("Rendering DialogSessionList");
 
   return (
     <DialogSelect

@@ -5,6 +5,9 @@ import { useTheme, DEFAULT_THEMES } from "../context/theme";
 import { DialogConnect } from "./dialog-connect";
 import { DialogApp } from "./dialog-app";
 import { DialogSessionList } from "./dialog-session-list";
+import { useSync } from "../context/sync";
+import { useSession } from "../context/session";
+import { useRoute } from "../context/route";
 
 const DEBUG = process.env.ADK_TUI_DEBUG === "1";
 function log(msg: string) {
@@ -19,7 +22,7 @@ export interface Command {
   title: string;
   category?: string;
   description?: string;
-  action: () => void;
+  action: () => void | Promise<void>;
 }
 
 export interface DialogCommandProps {
@@ -30,6 +33,9 @@ export interface DialogCommandProps {
 export function DialogCommand(props: DialogCommandProps) {
   const dialog = useDialog();
   const themeCtx = useTheme();
+  const sync = useSync();
+  const session = useSession();
+  const route = useRoute();
 
   const builtInCommands: Command[] = [
     {
@@ -51,6 +57,7 @@ export function DialogCommand(props: DialogCommandProps) {
       action: () => {
         log("Executing /sessions action");
         dialog.replace(() => <DialogSessionList />);
+        log("/sessions action complete");
       },
     },
     {
@@ -58,9 +65,26 @@ export function DialogCommand(props: DialogCommandProps) {
       title: "/new",
       category: "Session",
       description: "Start new session",
-      action: () => {
+      action: async () => {
         log("Executing /new action");
-        dialog.replace(() => <DialogApp />);
+        
+        // If no app selected, show app selector
+        if (!sync.data.currentApp) {
+          log("/new: no app selected, showing app selector");
+          dialog.replace(() => <DialogApp />);
+          return;
+        }
+        
+        // Create new session
+        log("/new: creating new session");
+        dialog.clear();
+        const newSession = await session.create();
+        if (newSession) {
+          log(`/new: session created ${newSession.id}, navigating`);
+          route.goToSession(newSession.id);
+        } else {
+          log("/new: session creation failed");
+        }
       },
     },
     {
@@ -71,6 +95,7 @@ export function DialogCommand(props: DialogCommandProps) {
       action: () => {
         log("Executing /connect action");
         dialog.replace(() => <DialogConnect />);
+        log("/connect action complete");
       },
     },
     {
@@ -81,6 +106,7 @@ export function DialogCommand(props: DialogCommandProps) {
       action: () => {
         log("Executing /theme action");
         dialog.replace(() => <ThemePicker />);
+        log("/theme action complete");
       },
     },
     {
@@ -90,6 +116,7 @@ export function DialogCommand(props: DialogCommandProps) {
       description: "Exit ADK TUI",
       action: () => {
         log("Executing /quit action");
+        log("Exiting process...");
         process.exit(0);
       },
     },
@@ -103,11 +130,11 @@ export function DialogCommand(props: DialogCommandProps) {
       value: cmd,
       category: cmd.category,
       description: cmd.description,
-      onSelect: (ctx, trigger) => {
+      onSelect: async (ctx, trigger) => {
         log(`Command selected: ${cmd.title} (id: ${cmd.id}) via ${trigger}`);
         props.onSelect?.(cmd);
         log(`Calling action for ${cmd.title}`);
-        cmd.action();
+        await cmd.action();
         log(`Action completed for ${cmd.title}`);
       },
     }))

@@ -164,7 +164,18 @@ function DialogContent(props: { stack: { factory: DialogFactory; onClose?: () =>
   
   return (
     <>
-      {top()?.factory()}
+      {(() => {
+        try {
+          log(`DialogContent rendering, stack length: ${props.stack.length}`);
+          const result = top()?.factory();
+          log(`DialogContent factory executed successfully`);
+          return result;
+        } catch (error) {
+          log(`DialogContent factory error: ${error}`);
+          console.error("Dialog factory error:", error);
+          return null;
+        }
+      })()}
     </>
   )
 }

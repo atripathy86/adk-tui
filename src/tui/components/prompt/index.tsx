@@ -71,6 +71,13 @@ export function Prompt(props: PromptProps) {
       }
     }
 
+    // Submit on Enter (without shift)
+    if (e.name === "return" && !e.shift) {
+      e.preventDefault?.();
+      submit();
+      return;
+    }
+
     // History navigation (only when at start/end of input)
     if (keybind.match("history_previous", e) || e.name === "up") {
       if (input?.cursorOffset === 0 || !value()) {

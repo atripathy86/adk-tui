@@ -79,9 +79,11 @@ function AppWithProviders() {
   return (
     <RouteProvider>
       <SessionProvider>
-        <CommandProvider>
-          <MainContent />
-        </CommandProvider>
+        <DialogProvider>
+          <CommandProvider>
+            <MainContent />
+          </CommandProvider>
+        </DialogProvider>
       </SessionProvider>
     </RouteProvider>
   );
@@ -106,11 +108,9 @@ export default function App(props: { initialServerUrl?: string }) {
         <SDKProvider initialServerUrl={props.initialServerUrl}>
           <ThemeProvider mode="dark">
             <KeybindProvider>
-              <DialogProvider>
-                <Show when={ready()}>
-                  <AppWithProviders />
-                </Show>
-              </DialogProvider>
+              <Show when={ready()}>
+                <AppWithProviders />
+              </Show>
             </KeybindProvider>
           </ThemeProvider>
         </SDKProvider>

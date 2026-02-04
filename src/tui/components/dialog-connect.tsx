@@ -19,9 +19,12 @@ export function DialogConnect() {
   const { theme } = useTheme()
   const sdk = useSDK()
   
+  log("DialogConnect created")
   const [url, setUrl] = createSignal(sdk.serverUrl())
   const [error, setError] = createSignal<string | null>(null)
   const [connecting, setConnecting] = createSignal(false)
+  
+  log(`DialogConnect initial URL: ${url()}`)
 
   async function handleConnect() {
     const targetUrl = url().trim()
@@ -66,11 +69,13 @@ export function DialogConnect() {
 
   useKeyboard((evt) => {
     if (evt.name === "return" && !connecting()) {
+      log("Enter key pressed in DialogConnect")
       evt.preventDefault()
       handleConnect()
     }
   })
 
+  log("DialogConnect rendering")
   return (
     <box gap={1} paddingBottom={1}>
       <box paddingLeft={4} paddingRight={4}>
@@ -89,8 +94,9 @@ export function DialogConnect() {
 
         <box paddingTop={1} paddingBottom={1}>
           <input
-            onInput={(e) => {
-              setUrl(e)
+            onInput={(value) => {
+              log(`Input value changed to: ${value}`)
+              setUrl(value)
               setError(null)
             }}
             value={url()}
@@ -104,7 +110,7 @@ export function DialogConnect() {
 
         <Show when={error()}>
           <box paddingBottom={1}>
-            <text fg={theme.danger}>{error()}</text>
+            <text fg={theme.error}>{error()}</text>
           </box>
         </Show>
 
@@ -114,14 +120,12 @@ export function DialogConnect() {
           </box>
         </Show>
 
-        <box flexDirection="row" gap={2}>
-          <text fg={theme.textMuted}>
-            Press <text fg={theme.text} attributes={TextAttributes.BOLD}>Enter</text> to connect
-          </text>
-          <text fg={theme.textMuted}>•</text>
-          <text fg={theme.textMuted}>
-            <text fg={theme.text} attributes={TextAttributes.BOLD}>Esc</text> to cancel
-          </text>
+        <box flexDirection="row" gap={1}>
+          <text fg={theme.textMuted}>Press</text>
+          <text fg={theme.text} attributes={TextAttributes.BOLD}>Enter</text>
+          <text fg={theme.textMuted}>to connect •</text>
+          <text fg={theme.text} attributes={TextAttributes.BOLD}>Esc</text>
+          <text fg={theme.textMuted}>to cancel</text>
         </box>
       </box>
     </box>
