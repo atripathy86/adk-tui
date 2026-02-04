@@ -1,4 +1,4 @@
-import type { TextareaRenderable, ParsedKey } from "@opentui/core";
+import type { KeyEvent, TextareaRenderable } from "@opentui/core";
 import { createSignal, Show } from "solid-js";
 import { useTheme } from "../../context/theme";
 import { useKeybind } from "../../context/keybind";
@@ -34,7 +34,6 @@ export function Prompt(props: PromptProps) {
   const history = usePromptHistory();
 
   const [value, setValue] = createSignal("");
-  const [isFocused, setIsFocused] = createSignal(false);
 
   const defaultCommands: AutocompleteOption[] = [
     { label: "help", value: "help", description: "Show available commands" },
@@ -57,7 +56,7 @@ export function Prompt(props: PromptProps) {
     input?.clear();
   }
 
-  function handleKeyDown(e: ParsedKey) {
+  function handleKeyDown(e: KeyEvent) {
     if (props.disabled) {
       e.preventDefault?.();
       return;
@@ -108,7 +107,7 @@ export function Prompt(props: PromptProps) {
 
   const ref: PromptRef = {
     get focused() {
-      return isFocused();
+      return input?.focused ?? false;
     },
     get value() {
       return value();
@@ -154,11 +153,7 @@ export function Prompt(props: PromptProps) {
           vertical: "┃",
           bottomLeft: "╹",
           topLeft: " ",
-          horizontalUp: " ",
-          horizontalDown: " ",
           cross: " ",
-          verticalLeft: " ",
-          verticalRight: " ",
           horizontal: " ",
           topRight: " ",
           bottomRight: " ",
@@ -189,8 +184,6 @@ export function Prompt(props: PromptProps) {
             }}
             onKeyDown={handleKeyDown}
             onSubmit={submit}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             ref={(r: TextareaRenderable) => {
               input = r;
               setTimeout(() => {

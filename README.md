@@ -79,6 +79,12 @@ bun run dev
 bun run build
 ```
 
+## Development Notes
+
+- The build uses Bun + Babel (see build.ts and scripts/solid-plugin.ts). JSX is transformed by babel-preset-solid with moduleName set to @opentui/solid.
+- TypeScript is configured with noEmit, so VSCode/tsc type checks are separate from the Bun build pipeline.
+- Keep jsxImportSource set to @opentui/solid in tsconfig.json so VSCode picks up OpenTUI’s JSX intrinsic elements and props.
+
 ## Usage
 
 ### Running the TUI
