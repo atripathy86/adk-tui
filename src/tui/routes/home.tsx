@@ -1,4 +1,4 @@
-import { Show } from "solid-js";
+import { Show, createMemo } from "solid-js";
 import { Logo } from "../components/logo";
 import { Prompt, PromptHistoryProvider } from "../components/prompt";
 import { useTheme } from "../context/theme";
@@ -8,6 +8,7 @@ import { useSession } from "../context/session";
 import { useRoute } from "../context/route";
 import { useDialog } from "../ui/dialog";
 import { DialogApp } from "../components/dialog-app";
+import { useBuiltInCommands } from "../components/dialog-command";
 
 export function Home() {
   const { theme } = useTheme();
@@ -16,6 +17,16 @@ export function Home() {
   const session = useSession();
   const route = useRoute();
   const dialog = useDialog();
+  const builtInCommands = useBuiltInCommands();
+
+  const promptCommands = createMemo(() =>
+    builtInCommands.map((cmd) => ({
+      label: cmd.title.slice(1),
+      value: cmd.title.slice(1),
+      description: cmd.description,
+      action: cmd.action,
+    }))
+  );
 
   const handleSubmit = async (text: string) => {
     // If no app selected, prompt to select one
@@ -66,6 +77,7 @@ export function Home() {
                 : "Select an app first (press Enter)"
             }
             onSubmit={handleSubmit}
+            commands={promptCommands()}
           />
         </box>
 

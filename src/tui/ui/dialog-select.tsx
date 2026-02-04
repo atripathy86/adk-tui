@@ -85,12 +85,11 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
 
   const filtered = createMemo(() => {
     if (props.skipFilter) {
-      return props.options.filter((x) => x.disabled !== true)
+      return props.options
     }
     const needle = store.filter.toLowerCase()
     const result = pipe(
       props.options,
-      filter((x) => x.disabled !== true),
       (x) => (!needle ? x : fuzzysort.go(needle, x, { keys: ["title", "category"] }).map((x) => x.obj)),
     )
     return result

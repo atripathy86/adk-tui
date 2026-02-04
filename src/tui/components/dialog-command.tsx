@@ -30,14 +30,14 @@ export interface DialogCommandProps {
   onSelect?: (command: Command) => void;
 }
 
-export function DialogCommand(props: DialogCommandProps) {
+// Shared commands list for both command palette and prompt autocomplete
+export function useBuiltInCommands() {
   const dialog = useDialog();
-  const themeCtx = useTheme();
   const sync = useSync();
   const session = useSession();
   const route = useRoute();
 
-  const builtInCommands: Command[] = [
+  return [
     {
       id: "app:select",
       title: "/app",
@@ -120,7 +120,14 @@ export function DialogCommand(props: DialogCommandProps) {
         process.exit(0);
       },
     },
-  ];
+  ] as Command[];
+}
+
+export function DialogCommand(props: DialogCommandProps) {
+  const dialog = useDialog();
+  const themeCtx = useTheme();
+
+  const builtInCommands = useBuiltInCommands();
 
   const allCommands = createMemo(() => [...builtInCommands, ...props.commands]);
 

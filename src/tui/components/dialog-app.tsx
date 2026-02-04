@@ -3,6 +3,7 @@ import { DialogSelect, type DialogSelectOption } from "../ui/dialog-select";
 import { useDialog } from "../ui/dialog";
 import { useSDK } from "../context/sdk";
 import { useSync, useSyncActions } from "../context/sync";
+import { useRoute } from "../context/route";
 
 const DEBUG = process.env.ADK_TUI_DEBUG === "1";
 function log(msg: string) {
@@ -18,6 +19,7 @@ export function DialogApp() {
   const sdk = useSDK();
   const syncState = useSync();
   const sync = useSyncActions();
+  const route = useRoute();
 
   log(`DialogApp: serverUrl=${sdk.serverUrl()}`);
 
@@ -80,6 +82,8 @@ export function DialogApp() {
     sync.setCurrentSession(null);
     sync.setSessions([]);
     dialog.clear();
+    // Navigate to home when changing apps
+    route.goHome();
   };
 
   log("DialogApp rendering");

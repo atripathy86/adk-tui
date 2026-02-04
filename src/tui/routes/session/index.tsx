@@ -6,6 +6,7 @@ import { useSession } from "../../context/session";
 import { useRoute } from "../../context/route";
 import { Prompt, PromptHistoryProvider } from "../../components/prompt";
 import { Message } from "./message";
+import { useBuiltInCommands } from "../../components/dialog-command";
 
 interface SessionViewProps {
   sessionId: string;
@@ -118,6 +119,16 @@ function Timeline(props: { sessionId: string }) {
 export function SessionView(props: SessionViewProps) {
   const { theme } = useTheme();
   const session = useSession();
+  const builtInCommands = useBuiltInCommands();
+
+  const promptCommands = createMemo(() =>
+    builtInCommands.map((cmd) => ({
+      label: cmd.title.slice(1),
+      value: cmd.title.slice(1),
+      description: cmd.description,
+      action: cmd.action,
+    }))
+  );
 
   const handleSubmit = async (text: string) => {
     await session.sendMessage(text);
@@ -147,6 +158,7 @@ export function SessionView(props: SessionViewProps) {
             sessionID={props.sessionId}
             placeholder="Type a message..."
             onSubmit={handleSubmit}
+            commands={promptCommands()}
           />
         </box>
       </box>

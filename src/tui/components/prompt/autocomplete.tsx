@@ -6,6 +6,7 @@ export interface AutocompleteOption {
   label: string;
   value: string;
   description?: string;
+  action?: () => void | Promise<void>;
 }
 
 export interface AutocompleteRef {
@@ -71,6 +72,9 @@ export function Autocomplete(props: AutocompleteProps) {
         e.preventDefault?.();
         const selected = options[selectedIndex()];
         if (selected) {
+          if (selected.action) {
+            selected.action();
+          }
           props.onSelect(selected);
           setVisible(false);
           setFilter("");
