@@ -13,7 +13,7 @@ ADK TUI provides a rich terminal-based interface for interacting with ADK agents
 ### What's Working
 
 - **TUI Rendering Engine**: Full terminal UI powered by `@opentui/solid` and SolidJS
-- **ADK Server Connection**: Connects to ADK webserver (default: `http://ai02.labs.hpecorp.net:8087`)
+- **ADK Server Connection**: Connects to ADK webserver (set via `/connect` command)
 - **App Discovery**: Fetches and displays available apps from the `/list-apps` endpoint
 - **Theme System**: 32 built-in themes with theme switcher
 - **Command Palette**: `Ctrl+P` opens searchable command palette
@@ -76,7 +76,7 @@ bun install
 bun run dev
 
 # Build standalone binary
-bun build ./src/index.tsx --compile --outfile adk-tui
+bun run build
 ```
 
 ## Usage
@@ -87,9 +87,31 @@ bun build ./src/index.tsx --compile --outfile adk-tui
 # Run compiled binary
 ./adk-tui
 
+# Run and connect to a server immediately
+./adk-tui http://localhost:8087
+
 # Or run in development mode
 bun run dev
 ```
+
+### Debug Mode
+
+To enable detailed logging for troubleshooting:
+
+```bash
+# Enable debug logging
+ADK_TUI_DEBUG=1 ./adk-tui
+
+# View debug logs (in a separate terminal)
+tail -f /tmp/adk-tui-debug.log
+```
+
+Debug logs include:
+- Terminal and environment information
+- Component rendering lifecycle
+- TTY status checks
+- Initialization flow
+- Error details
 
 ### Testing SDK Connection
 
@@ -128,10 +150,12 @@ Type to fuzzy-search commands.
 
 ### Changing the ADK Server Endpoint
 
-Edit `src/sdk/client.ts` and modify the `ADK_BASE_URL` constant:
+Use the `/connect` command in the command palette to set the server URL. The selected URL is saved to your config at `~/.config/adk-tui/config.json` and used on next launch.
 
-```typescript
-const ADK_BASE_URL = "http://your-adk-server:8087";
+You can also pass a server URL as the first CLI argument to connect immediately:
+
+```bash
+./adk-tui http://localhost:8087
 ```
 
 ### Changing the Default Theme
@@ -236,7 +260,7 @@ Try running in a modern terminal like:
 
 ### Cannot connect to ADK server
 
-1. Verify the server is running: `curl http://ai02.labs.hpecorp.net:8087/list-apps`
+1. Verify the server is running: `curl http://your-adk-server:8087/list-apps`
 2. Check network connectivity
 3. Ensure no firewall is blocking the connection
 

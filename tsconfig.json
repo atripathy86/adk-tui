@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "esnext",

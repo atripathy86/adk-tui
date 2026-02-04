@@ -4,10 +4,13 @@ import { useKeybind } from "./keybind"
 import { useDialog } from "../ui/dialog"
 import { DialogCommand, type Command } from "../components/dialog-command"
 
-// const logFile = "/tmp/adk-tui-debug.log"
-// function log(msg: string) {
-//   appendFileSync(logFile, `[${new Date().toISOString()}] ${msg}\n`)
-// }
+const DEBUG = process.env.ADK_TUI_DEBUG === "1";
+function log(msg: string) {
+  if (!DEBUG) return;
+  const { appendFileSync } = require("fs");
+  const line = `[Command] ${msg}\n`;
+  appendFileSync("/tmp/adk-tui-debug.log", line);
+}
 
 interface CommandContextValue {
   open: () => void
@@ -23,23 +26,27 @@ export function CommandProvider(props: ParentProps<{ additionalCommands?: Comman
   const commands: Command[] = props.additionalCommands ?? []
 
   function openCommandPalette() {
+    log("openCommandPalette() called");
     dialog.replace(() => <DialogCommand commands={commands} />)
   }
 
   useKeyboard((evt) => {
     if (keybind.match("command_palette", evt)) {
+      log("command_palette keybind matched");
       evt.preventDefault()
       openCommandPalette()
       return
     }
 
     if (keybind.match("theme_list", evt)) {
+      log("theme_list keybind matched");
       evt.preventDefault()
       dialog.replace(() => <DialogCommand commands={commands} />)
       return
     }
 
     if (keybind.match("quit", evt)) {
+      log("quit keybind matched");
       process.exit(0)
     }
   })

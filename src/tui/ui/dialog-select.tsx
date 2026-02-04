@@ -53,6 +53,15 @@ function truncate(str: string, length: number): string {
 export function DialogSelect<T>(props: DialogSelectProps<T>) {
   const dialog = useDialog()
   const { theme } = useTheme()
+  const DEBUG = process.env.ADK_TUI_DEBUG === "1"
+  function log(msg: string) {
+    if (!DEBUG) return
+    const { appendFileSync } = require("fs")
+    const line = `[DialogSelect] ${msg}\n`
+    appendFileSync("/tmp/adk-tui-debug.log", line)
+  }
+  
+  log(`DialogSelect mounted with ${props.options.length} options`)
   const [store, setStore] = createStore({
     selected: 0,
     filter: "",
@@ -154,13 +163,16 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
 
   const keybind = useKeybind()
   useKeyboard((evt) => {
+    if (evt.name) log(`key: name=${evt.name} ctrl=${evt.ctrl} meta=${evt.meta} shift=${evt.shift} super=${evt.super}`)
     if (evt.name === "up" || (evt.ctrl && evt.name === "p")) move(-1)
     if (evt.name === "down" || (evt.ctrl && evt.name === "n")) move(1)
     if (evt.name === "pageup") move(-10)
     if (evt.name === "pagedown") move(10)
     if (evt.name === "return") {
+      log("return pressed")
       const option = selected()
       if (option) {
+        log(`selected option: ${JSON.stringify({ title: option.title, value: option.value, disabled: option.disabled })}`)
         if (option.onSelect) option.onSelect(dialog)
         props.onSelect?.(option)
       }

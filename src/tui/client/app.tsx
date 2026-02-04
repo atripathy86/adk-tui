@@ -1,105 +1,114 @@
-import { createResource, Show, For, onMount, createSignal } from "solid-js";
-import { useSDK } from "../context/sdk";
+import { Show, onMount, createSignal, Switch, Match } from "solid-js";
 import { ThemeProvider, useTheme } from "../context/theme";
 import { SDKProvider } from "../context/sdk";
 import { KVProvider } from "../context/kv";
 import { SyncProvider } from "../context/sync";
 import { KeybindProvider, useKeybind } from "../context/keybind";
-import { DialogProvider } from "../ui/dialog";
+import { DialogProvider, useDialog } from "../ui/dialog";
 import { CommandProvider } from "../context/command";
-import { Logo } from "../components/logo";
+import { RouteProvider, useRoute } from "../context/route";
+import { SessionProvider, useSession } from "../context/session";
+import { Home } from "../routes/home";
+import { SessionView } from "../routes/session";
+import { DialogSessionList } from "../components/dialog-session-list";
+import { DialogApp } from "../components/dialog-app";
+import { useKeyboard } from "@opentui/solid";
+
+const DEBUG = process.env.ADK_TUI_DEBUG === "1";
+function log(msg: string) {
+  if (!DEBUG) return;
+  const { appendFileSync } = require("fs");
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  appendFileSync("/tmp/adk-tui-debug.log", line);
+}
 
 function MainContent() {
-  const sdk = useSDK();
-  const [apps] = createResource(
-    () => sdk.serverUrl(),
-    async () => {
-      return await sdk.client.listApps();
-    }
-  );
-  
-  const ctx = useTheme();
+  const { theme } = useTheme();
   const keybind = useKeybind();
+  const route = useRoute();
+  const session = useSession();
+  const dialog = useDialog();
+
+  log("MainContent rendering...");
+
+  // Global keybind handlers
+  useKeyboard((evt) => {
+    // Session list
+    if (keybind.match("session_list", evt)) {
+      evt.preventDefault();
+      dialog.replace(() => <DialogSessionList />);
+      return;
+    }
+
+    // New session
+    if (keybind.match("session_new", evt)) {
+      evt.preventDefault();
+      dialog.replace(() => <DialogApp />);
+      return;
+    }
+  });
+
+  log("MainContent about to return JSX...");
 
   return (
-    <box 
-      borderStyle="single" 
-      borderColor={ctx.theme.border} 
-      padding={1} 
+    <box
       flexDirection="column"
       width="100%"
       height="100%"
+      backgroundColor={theme.background}
     >
-      <box flexDirection="row" alignItems="center" gap={2} marginBottom={1}>
-        <Logo />
-        <box flexDirection="column">
-          <text fg={ctx.theme.primary} bold>ADK TUI Client</text>
-          <text fg={sdk.isConnected() ? ctx.theme.success : ctx.theme.warning}>
-            {sdk.isConnected() ? "Connected to: " : "Connecting to: "}{sdk.serverUrl()}
-          </text>
-        </box>
-      </box>
-      
-      <box marginTop={1} flexDirection="column">
-        <Show when={!apps.loading} fallback={<text fg={ctx.theme.textMuted}>Loading apps...</text>}>
-          <Show 
-            when={sdk.isConnected() && apps() && apps()!.length > 0}
-            fallback={
-              <Show 
-                when={sdk.connectionError()}
-                fallback={<text fg={ctx.theme.textMuted}>No apps available</text>}
-              >
-                <text fg={ctx.theme.error}>Error: {sdk.connectionError()}</text>
-              </Show>
+      <Switch>
+        <Match when={route.current().type === "home"}>
+          <Home />
+        </Match>
+        <Match when={route.current().type === "session"}>
+          {(() => {
+            const current = route.current();
+            if (current.type === "session") {
+              return <SessionView sessionId={current.sessionId} />;
             }
-          >
-            <text underline fg={ctx.theme.text} marginBottom={1}>Available Apps:</text>
-            <For each={apps()}>{(app) => (
-              <text fg={ctx.theme.text}>• {app}</text>
-            )}</For>
-          </Show>
-        </Show>
-      </box>
-
-      <box marginTop={2} flexDirection="column">
-        <text fg={ctx.theme.textMuted}>
-          Press {keybind.print("command_palette")} for command palette
-        </text>
-        <text fg={ctx.theme.textMuted}>
-          Type /connect in palette to change server
-        </text>
-        <text fg={ctx.theme.textMuted}>
-          Press {keybind.print("quit")} to quit
-        </text>
-      </box>
+            return null;
+          })()}
+        </Match>
+      </Switch>
     </box>
   );
 }
 
-function AppWithCommands() {
+function AppWithProviders() {
   return (
-    <CommandProvider>
-      <MainContent />
-    </CommandProvider>
+    <RouteProvider>
+      <SessionProvider>
+        <CommandProvider>
+          <MainContent />
+        </CommandProvider>
+      </SessionProvider>
+    </RouteProvider>
   );
 }
 
-export default function App() {
+export default function App(props: { initialServerUrl?: string }) {
   const [ready, setReady] = createSignal(false);
-  
+
+  log("App component created");
+
   onMount(() => {
+    log("App onMount called");
     setReady(true);
+    log("App ready state set to true");
   });
+
+  log(`App rendering, ready=${ready()}`);
 
   return (
     <KVProvider>
       <SyncProvider>
-        <SDKProvider>
+        <SDKProvider initialServerUrl={props.initialServerUrl}>
           <ThemeProvider mode="dark">
             <KeybindProvider>
               <DialogProvider>
                 <Show when={ready()}>
-                  <AppWithCommands />
+                  <AppWithProviders />
                 </Show>
               </DialogProvider>
             </KeybindProvider>

@@ -4,7 +4,15 @@ import { TextAttributes } from "@opentui/core"
 import { useDialog } from "../ui/dialog"
 import { useTheme } from "../context/theme"
 import { useSDK } from "../context/sdk"
-import { DEFAULT_ADK_URL } from "../../sdk/client"
+import { DialogApp } from "./dialog-app"
+
+const DEBUG = process.env.ADK_TUI_DEBUG === "1";
+function log(msg: string) {
+  if (!DEBUG) return;
+  const { appendFileSync } = require("fs");
+  const line = `[DialogConnect] ${msg}\n`;
+  appendFileSync("/tmp/adk-tui-debug.log", line);
+}
 
 export function DialogConnect() {
   const dialog = useDialog()
@@ -17,6 +25,8 @@ export function DialogConnect() {
 
   async function handleConnect() {
     const targetUrl = url().trim()
+    log(`handleConnect called with: ${targetUrl}`)
+    
     if (!targetUrl) {
       setError("URL cannot be empty")
       return
@@ -25,21 +35,32 @@ export function DialogConnect() {
     try {
       new URL(targetUrl)
     } catch {
-      setError("Invalid URL format")
+      setError("Invalid URL format - must be http://... or https://...")
       return
     }
 
     setConnecting(true)
     setError(null)
 
-    const success = await sdk.setServerUrl(targetUrl)
-    
-    setConnecting(false)
-    
-    if (success) {
-      dialog.clear()
-    } else {
-      setError(sdk.connectionError() || "Connection failed")
+    try {
+      log(`Calling sdk.setServerUrl`)
+      const success = await sdk.setServerUrl(targetUrl)
+      log(`setServerUrl returned: ${success}`)
+
+      if (success) {
+        log(`Connection successful, showing app dialog`)
+        dialog.replace(() => <DialogApp />)
+      } else {
+        const err = sdk.connectionError() || "Connection failed"
+        log(`Connection failed: ${err}`)
+        setError(err)
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Connection failed"
+      log(`Exception during connect: ${msg}`)
+      setError(msg)
+    } finally {
+      setConnecting(false)
     }
   }
 
@@ -77,7 +98,7 @@ export function DialogConnect() {
             cursorColor={theme.primary}
             focusedTextColor={theme.text}
             ref={(r) => setTimeout(() => r.focus(), 1)}
-            placeholder={DEFAULT_ADK_URL}
+            placeholder="http://your-adk-server:8087"
           />
         </box>
 

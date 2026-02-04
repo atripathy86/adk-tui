@@ -4,6 +4,14 @@ import { useTheme } from "../context/theme"
 import { Renderable, RGBA } from "@opentui/core"
 import { createStore } from "solid-js/store"
 
+const DEBUG = process.env.ADK_TUI_DEBUG === "1";
+function log(msg: string) {
+  if (!DEBUG) return;
+  const { appendFileSync } = require("fs");
+  const line = `[Dialog] ${msg}\n`;
+  appendFileSync("/tmp/adk-tui-debug.log", line);
+}
+
 export function Dialog(
   props: ParentProps<{
     size?: "medium" | "large"
@@ -86,6 +94,7 @@ function init() {
 
   return {
     clear() {
+      log(`dialog.clear() called, stack length before: ${store.stack.length}`);
       for (const item of store.stack) {
         if (item.onClose) item.onClose()
       }
@@ -93,9 +102,11 @@ function init() {
         setStore("size", "medium")
         setStore("stack", [])
       })
+      log(`dialog.clear() complete, stack length after: ${store.stack.length}`);
       refocus()
     },
     replace(factory: DialogFactory, onClose?: () => void) {
+      log(`dialog.replace() called, current stack length: ${store.stack.length}`);
       if (store.stack.length === 0) {
         focus = renderer.currentFocusedRenderable
         focus?.blur()
@@ -112,6 +123,7 @@ function init() {
           },
         ])
       })
+      log(`dialog.replace() complete, new stack length: ${store.stack.length}`);
     },
     get stack() {
       return store.stack
@@ -148,9 +160,13 @@ export function DialogProvider(props: ParentProps) {
 }
 
 function DialogContent(props: { stack: { factory: DialogFactory; onClose?: () => void }[] }) {
-  const top = props.stack.at(-1)
-  if (!top) return null
-  return <>{top.factory()}</>
+  const top = createMemo(() => props.stack.at(-1))
+  
+  return (
+    <>
+      {top()?.factory()}
+    </>
+  )
 }
 
 export function useDialog() {
