@@ -2,7 +2,7 @@ import { createContext, useContext, type ParentProps } from "solid-js"
 import { useKeyboard } from "@opentui/solid"
 import { useKeybind } from "./keybind"
 import { useDialog } from "../ui/dialog"
-import { DialogCommand, type Command } from "../components/dialog-command"
+import { DialogCommand, ThemePicker, type Command } from "../components/dialog-command"
 
 const DEBUG = process.env.ADK_TUI_DEBUG === "1";
 function log(msg: string) {
@@ -41,7 +41,7 @@ export function CommandProvider(props: ParentProps<{ additionalCommands?: Comman
     if (keybind.match("theme_list", evt)) {
       log("theme_list keybind matched");
       evt.preventDefault()
-      dialog.replace(() => <DialogCommand commands={commands} />)
+      dialog.replace(() => <ThemePicker />)
       return
     }
 

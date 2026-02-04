@@ -149,7 +149,7 @@ export function DialogCommand(props: DialogCommandProps) {
   );
 }
 
-function ThemePicker() {
+export function ThemePicker() {
   const dialog = useDialog();
   const themeCtx = useTheme();
 
