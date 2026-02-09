@@ -25,12 +25,13 @@ jobs:
           - runner: ubuntu-24.04-arm
             target: bun-linux-arm64
             binary_name: adk-tui-linux-arm64
-          - runner: macos-13
-            target: bun-darwin-x64
-            binary_name: adk-tui-darwin-x64
           - runner: macos-14
             target: bun-darwin-arm64
             binary_name: adk-tui-darwin-arm64
+          - runner: macos-14
+            target: bun-darwin-x64
+            binary_name: adk-tui-darwin-x64
+            cross_pkg: "@opentui/core-darwin-x64@0.1.70"
           - runner: windows-latest
             target: bun-windows-x64
             binary_name: adk-tui-windows-x64.exe
@@ -46,6 +47,10 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Install cross-compilation dependency
+        if: matrix.cross_pkg != ''
+        run: bun add ${{ matrix.cross_pkg }}
 
       - name: Build binary
         run: bun run build.ts --target ${{ matrix.target }} --outfile ${{ matrix.binary_name }}
