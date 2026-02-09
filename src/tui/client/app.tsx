@@ -5,6 +5,7 @@ import { KVProvider } from "../context/kv";
 import { SyncProvider } from "../context/sync";
 import { KeybindProvider, useKeybind } from "../context/keybind";
 import { DialogProvider, useDialog } from "../ui/dialog";
+import { ToastProvider } from "../ui/toast";
 import { CommandProvider } from "../context/command";
 import { RouteProvider, useRoute } from "../context/route";
 import { SessionProvider, useSession } from "../context/session";
@@ -12,7 +13,9 @@ import { Home } from "../routes/home";
 import { SessionView } from "../routes/session";
 import { DialogSessionList } from "../components/dialog-session-list";
 import { DialogApp } from "../components/dialog-app";
-import { useKeyboard } from "@opentui/solid";
+import { useKeyboard, useRenderer } from "@opentui/solid";
+import { useToast } from "../ui/toast";
+import { Clipboard } from "../util/clipboard";
 
 const DEBUG = process.env.ADK_TUI_DEBUG === "1";
 function log(msg: string) {
@@ -28,6 +31,8 @@ function MainContent() {
   const route = useRoute();
   const session = useSession();
   const dialog = useDialog();
+  const renderer = useRenderer();
+  const toast = useToast();
 
   log("MainContent rendering...");
 
@@ -56,6 +61,15 @@ function MainContent() {
       width="100%"
       height="100%"
       backgroundColor={theme.background}
+      onMouseUp={async () => {
+        const text = renderer.getSelection()?.getSelectedText();
+        if (text && text.length > 0) {
+          await Clipboard.copy(text)
+            .then(() => toast.info("Copied to clipboard"))
+            .catch(() => toast.error("Failed to copy"));
+          renderer.clearSelection();
+        }
+      }}
     >
       <Switch>
         <Match when={route.current().type === "home"}>
@@ -108,9 +122,11 @@ export default function App(props: { initialServerUrl?: string }) {
         <SDKProvider initialServerUrl={props.initialServerUrl}>
           <ThemeProvider mode="dark">
             <KeybindProvider>
-              <Show when={ready()}>
-                <AppWithProviders />
-              </Show>
+              <ToastProvider>
+                <Show when={ready()}>
+                  <AppWithProviders />
+                </Show>
+              </ToastProvider>
             </KeybindProvider>
           </ThemeProvider>
         </SDKProvider>

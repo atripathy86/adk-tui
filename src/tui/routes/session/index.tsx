@@ -4,9 +4,13 @@ import { useKeybind } from "../../context/keybind";
 import { useSync } from "../../context/sync";
 import { useSession } from "../../context/session";
 import { useRoute } from "../../context/route";
+import { useToast } from "../../ui/toast";
+import { useKeyboard } from "@opentui/solid";
+import { Clipboard } from "../../util/clipboard";
 import { Prompt, PromptHistoryProvider } from "../../components/prompt";
 import { Message } from "./message";
 import { useBuiltInCommands } from "../../components/dialog-command";
+import type { Event } from "../../../sdk/types";
 
 interface SessionViewProps {
   sessionId: string;
@@ -116,10 +120,67 @@ function Timeline(props: { sessionId: string }) {
   );
 }
 
+/** Extract all text from an event's parts */
+function extractEventText(event: Event): string {
+  if (!event.content?.parts) return "";
+  return event.content.parts
+    .filter((p) => p.text && !p.thought)
+    .map((p) => p.text!)
+    .join("\n")
+    .trim();
+}
+
+/** Format a full session transcript as markdown */
+function formatTranscript(messages: Event[], sessionId: string): string {
+  const lines: string[] = [];
+  lines.push(`# Session ${sessionId.slice(0, 8)}`);
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  for (const msg of messages) {
+    const isUser = msg.author === "user";
+    lines.push(`## ${isUser ? "User" : msg.author || "Assistant"}`);
+    lines.push("");
+
+    if (msg.content?.parts) {
+      for (const part of msg.content.parts) {
+        if (part.text) {
+          lines.push(part.text);
+        }
+        if (part.functionCall) {
+          lines.push(`**Tool Call:** ${part.functionCall.name ?? "function"}`);
+          if (part.functionCall.args) {
+            lines.push("```json");
+            lines.push(JSON.stringify(part.functionCall.args, null, 2));
+            lines.push("```");
+          }
+        }
+        if (part.functionResponse) {
+          lines.push(`**Tool Response:** ${part.functionResponse.name ?? "response"}`);
+        }
+      }
+    }
+
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
 export function SessionView(props: SessionViewProps) {
   const { theme } = useTheme();
   const session = useSession();
+  const sync = useSync();
+  const keybind = useKeybind();
+  const toast = useToast();
   const builtInCommands = useBuiltInCommands();
+
+  const messages = createMemo(() => {
+    return sync.data.messages[props.sessionId] ?? [];
+  });
 
   const promptCommands = createMemo(() =>
     builtInCommands.map((cmd) => ({
@@ -133,6 +194,57 @@ export function SessionView(props: SessionViewProps) {
   const handleSubmit = async (text: string) => {
     await session.sendMessage(text);
   };
+
+  // Copy last assistant message to clipboard
+  async function copyLastMessage() {
+    const msgs = messages();
+    const lastAssistant = [...msgs].reverse().find((m) => m.author !== "user");
+    if (!lastAssistant) {
+      toast.warning("No assistant message to copy");
+      return;
+    }
+    const text = extractEventText(lastAssistant);
+    if (!text) {
+      toast.warning("No text content to copy");
+      return;
+    }
+    try {
+      await Clipboard.copy(text);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
+  }
+
+  // Copy full session transcript to clipboard
+  async function copyTranscript() {
+    const msgs = messages();
+    if (msgs.length === 0) {
+      toast.warning("No messages to copy");
+      return;
+    }
+    const transcript = formatTranscript(msgs, props.sessionId);
+    try {
+      await Clipboard.copy(transcript);
+      toast.success("Session transcript copied");
+    } catch {
+      toast.error("Failed to copy transcript");
+    }
+  }
+
+  // Keybind handlers for copy
+  useKeyboard((evt) => {
+    if (keybind.match("messages_copy", evt)) {
+      evt.preventDefault();
+      copyLastMessage();
+      return;
+    }
+    if (keybind.match("session_copy", evt)) {
+      evt.preventDefault();
+      copyTranscript();
+      return;
+    }
+  });
 
   // Load session data on mount
   createEffect(() => {

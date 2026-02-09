@@ -13,6 +13,8 @@ export type KeybindsConfig = {
   agent_list?: string;
   theme_list?: string;
   status_view?: string;
+  messages_copy?: string;
+  session_copy?: string;
   history_previous?: string;
   history_next?: string;
   [key: string]: string | undefined;
@@ -71,6 +73,8 @@ export function SyncProvider(props: { children: JSX.Element }) {
     agent_list: "<leader>a",
     theme_list: "<leader>t",
     status_view: "<leader>i",
+    messages_copy: "<leader>y",
+    session_copy: "<leader>c",
     history_previous: "up",
     history_next: "down",
   };

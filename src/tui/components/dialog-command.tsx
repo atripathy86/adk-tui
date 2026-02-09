@@ -1,6 +1,7 @@
 import { createMemo } from "solid-js";
 import { DialogSelect, type DialogSelectOption } from "../ui/dialog-select";
 import { useDialog } from "../ui/dialog";
+import { useToast } from "../ui/toast";
 import { useTheme, DEFAULT_THEMES } from "../context/theme";
 import { DialogConnect } from "./dialog-connect";
 import { DialogApp } from "./dialog-app";
@@ -8,6 +9,8 @@ import { DialogSessionList } from "./dialog-session-list";
 import { useSync } from "../context/sync";
 import { useSession } from "../context/session";
 import { useRoute } from "../context/route";
+import { Clipboard } from "../util/clipboard";
+import type { Event } from "../../sdk/types";
 
 const DEBUG = process.env.ADK_TUI_DEBUG === "1";
 function log(msg: string) {
@@ -31,11 +34,22 @@ export interface DialogCommandProps {
 }
 
 // Shared commands list for both command palette and prompt autocomplete
+/** Extract all text from an event's parts */
+function extractEventText(event: Event): string {
+  if (!event.content?.parts) return "";
+  return event.content.parts
+    .filter((p) => p.text && !p.thought)
+    .map((p) => p.text!)
+    .join("\n")
+    .trim();
+}
+
 export function useBuiltInCommands() {
   const dialog = useDialog();
   const sync = useSync();
   const session = useSession();
   const route = useRoute();
+  const toast = useToast();
 
   return [
     {
@@ -107,6 +121,86 @@ export function useBuiltInCommands() {
         log("Executing /theme action");
         dialog.replace(() => <ThemePicker />);
         log("/theme action complete");
+      },
+    },
+    {
+      id: "copy:last",
+      title: "/copy",
+      category: "Clipboard",
+      description: "Copy last assistant message",
+      action: async () => {
+        log("Executing /copy action");
+        dialog.clear();
+        const sessionId = sync.data.currentSessionId;
+        if (!sessionId) {
+          toast.warning("No active session");
+          return;
+        }
+        const messages = sync.data.messages[sessionId] ?? [];
+        const lastAssistant = [...messages].reverse().find((m) => m.author !== "user");
+        if (!lastAssistant) {
+          toast.warning("No assistant message to copy");
+          return;
+        }
+        const text = extractEventText(lastAssistant);
+        if (!text) {
+          toast.warning("No text content to copy");
+          return;
+        }
+        try {
+          await Clipboard.copy(text);
+          toast.success("Copied to clipboard");
+        } catch {
+          toast.error("Failed to copy to clipboard");
+        }
+      },
+    },
+    {
+      id: "copy:transcript",
+      title: "/copy-all",
+      category: "Clipboard",
+      description: "Copy full session transcript",
+      action: async () => {
+        log("Executing /copy-all action");
+        dialog.clear();
+        const sessionId = sync.data.currentSessionId;
+        if (!sessionId) {
+          toast.warning("No active session");
+          return;
+        }
+        const messages = sync.data.messages[sessionId] ?? [];
+        if (messages.length === 0) {
+          toast.warning("No messages to copy");
+          return;
+        }
+        const lines: string[] = [];
+        lines.push(`# Session ${sessionId.slice(0, 8)}`);
+        lines.push("", "---", "");
+        for (const msg of messages) {
+          const isUser = msg.author === "user";
+          lines.push(`## ${isUser ? "User" : msg.author || "Assistant"}`, "");
+          if (msg.content?.parts) {
+            for (const part of msg.content.parts) {
+              if (part.text) lines.push(part.text);
+              if (part.functionCall) {
+                lines.push(`**Tool Call:** ${part.functionCall.name ?? "function"}`);
+                if (part.functionCall.args) {
+                  lines.push("```json", JSON.stringify(part.functionCall.args, null, 2), "```");
+                }
+              }
+              if (part.functionResponse) {
+                lines.push(`**Tool Response:** ${part.functionResponse.name ?? "response"}`);
+              }
+            }
+          }
+          lines.push("", "---", "");
+        }
+        try {
+          await Clipboard.copy(lines.join("\n"));
+          toast.success("Session transcript copied");
+        } catch {
+          toast.error("Failed to copy transcript");
+        }
       },
     },
     {
