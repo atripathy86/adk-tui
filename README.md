@@ -13,16 +13,59 @@ A terminal user interface for [ADK](https://google.github.io/adk-docs/) (Agent D
 - **Leader key chords** — Vim-style `Ctrl+X` leader key for quick access
 - **Artifacts viewer** — browse agent-generated artifacts
 
-## Quick Start
+## Installation
+
+### One-line install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/atripathy86/adk-tui/master/install | bash
+```
+
+This detects your OS and architecture, downloads the latest binary, and adds it to your `PATH`.
+
+**Install a specific version:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/atripathy86/adk-tui/master/install | bash -s -- --version 0.0.1
+```
+
+### Manual download
+
+Download the binary for your platform from the [latest release](https://github.com/atripathy86/adk-tui/releases/latest):
+
+| Platform | Binary |
+|----------|--------|
+| Linux x64 | `adk-tui-linux-x64` |
+| Linux ARM64 | `adk-tui-linux-arm64` |
+| macOS ARM64 (Apple Silicon) | `adk-tui-darwin-arm64` |
+| Windows x64 | `adk-tui-windows-x64.exe` |
+
+```bash
+# Example: Linux x64
+curl -fL -o adk-tui https://github.com/atripathy86/adk-tui/releases/latest/download/adk-tui-linux-x64
+chmod +x adk-tui
+sudo mv adk-tui /usr/local/bin/
+```
+
+### Build from source
 
 ```bash
 # Prerequisites: Bun v1.0+
+git clone https://github.com/atripathy86/adk-tui.git
+cd adk-tui
 bun install
 bun run build
 ./adk-tui http://localhost:8087
 ```
 
-Or in development mode:
+## Quick Start
+
+```bash
+# Connect to a running ADK server
+adk-tui http://localhost:8087
+```
+
+For development:
 
 ```bash
 bun run dev
