@@ -1,6 +1,7 @@
 node_modules
 opencode
 adk-tui
+adk-tui-*
 dist/
 *.map
 .sisyphus
