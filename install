@@ -218,6 +218,19 @@ if [[ "$no_modify_path" != "true" ]] && [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; t
     fi
 fi
 
+# Make available in the current session by symlinking to a directory already on PATH
+linked=false
+if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
+    for dir in /usr/local/bin "$HOME/.local/bin" "$HOME/bin"; do
+        if [ -d "$dir" ] && [ -w "$dir" ] && [[ ":$PATH:" == *":$dir:"* ]]; then
+            ln -sf "$install_path" "$dir/$APP"
+            echo -e "${MUTED}Symlinked ${NC}$APP ${MUTED}into ${NC}$dir"
+            linked=true
+            break
+        fi
+    done
+fi
+
 # GitHub Actions support
 if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" = "true" ]; then
     echo "$INSTALL_DIR" >> "$GITHUB_PATH"
@@ -231,6 +244,8 @@ echo -e "${MUTED}To get started:${NC}"
 echo ""
 echo -e "  adk-tui http://localhost:8087   ${MUTED}# Connect to your ADK server${NC}"
 echo ""
-echo -e "${MUTED}If 'adk-tui' is not found, restart your shell or run:${NC}"
-echo -e "  export PATH=$INSTALL_DIR:\$PATH"
-echo ""
+if [ "$linked" = false ] && [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
+    echo -e "${MUTED}To use it now (without restarting your shell):${NC}"
+    echo -e "  export PATH=$INSTALL_DIR:\$PATH"
+    echo ""
+fi
