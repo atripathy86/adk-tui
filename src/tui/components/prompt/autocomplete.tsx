@@ -1,6 +1,6 @@
 import { createSignal, createMemo, For, Show } from "solid-js";
 import { useTheme } from "../../context/theme";
-import type { ParsedKey } from "@opentui/core";
+import type { ParsedKey, ScrollBoxRenderable } from "@opentui/core";
 
 export interface AutocompleteOption {
   label: string;
@@ -24,6 +24,7 @@ export interface AutocompleteProps {
 
 export function Autocomplete(props: AutocompleteProps) {
   const { theme } = useTheme();
+  let scroll: ScrollBoxRenderable | undefined;
   const [visible, setVisible] = createSignal(false);
   const [filter, setFilter] = createSignal("");
   const [selectedIndex, setSelectedIndex] = createSignal(0);
@@ -40,6 +41,22 @@ export function Autocomplete(props: AutocompleteProps) {
     );
   });
 
+  function scrollToSelected() {
+    if (!scroll) return;
+    const idx = selectedIndex();
+    const children = scroll.getChildren();
+    const target = children[idx];
+    if (!target) return;
+    const y = target.y - scroll.y;
+    if (y >= scroll.height) {
+      scroll.scrollBy(y - scroll.height + 1);
+    }
+    if (y < 0) {
+      scroll.scrollBy(y);
+      if (idx === 0) scroll.scrollTo(0);
+    }
+  }
+
   const ref: AutocompleteRef = {
     get visible() {
       return visible();
@@ -50,6 +67,7 @@ export function Autocomplete(props: AutocompleteProps) {
         setFilter(value.split(" ")[0] || "");
         setVisible(filteredOptions().length > 0);
         setSelectedIndex(0);
+        scroll?.scrollTo(0);
       } else {
         setVisible(false);
         setFilter("");
@@ -65,9 +83,11 @@ export function Autocomplete(props: AutocompleteProps) {
       if (e.name === "up" || (e.ctrl && e.name === "p")) {
         e.preventDefault?.();
         setSelectedIndex((i) => (i > 0 ? i - 1 : options.length - 1));
+        scrollToSelected();
       } else if (e.name === "down" || (e.ctrl && e.name === "n")) {
         e.preventDefault?.();
         setSelectedIndex((i) => (i < options.length - 1 ? i + 1 : 0));
+        scrollToSelected();
       } else if (e.name === "return" || e.name === "tab") {
         e.preventDefault?.();
         const selected = options[selectedIndex()];
@@ -96,12 +116,14 @@ export function Autocomplete(props: AutocompleteProps) {
 
   return (
     <Show when={visible() && filteredOptions().length > 0}>
-      <box
+      <scrollbox
         flexDirection="column"
         border={["top", "left", "right", "bottom"]}
         borderColor={theme.border}
         backgroundColor={theme.backgroundPanel}
         marginBottom={1}
+        scrollbarOptions={{ visible: false }}
+        ref={(r: ScrollBoxRenderable) => (scroll = r)}
       >
         <For each={filteredOptions()}>
           {(option, index) => (
@@ -132,7 +154,7 @@ export function Autocomplete(props: AutocompleteProps) {
             </box>
           )}
         </For>
-      </box>
+      </scrollbox>
     </Show>
   );
 }

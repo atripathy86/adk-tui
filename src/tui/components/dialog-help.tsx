@@ -65,6 +65,7 @@ export function DialogHelp() {
           ["/copy-all", "Copy full transcript"],
           ["/theme", "Switch theme"],
           ["/status", "Connection status"],
+          ["/streaming", "Toggle streaming mode"],
           ["/help", "This help"],
           ["/quit", "Exit"],
         ].map(([cmd, desc]) => (

@@ -50,6 +50,21 @@ export function Prompt(props: PromptProps) {
     const text = value().trim();
     if (!text) return;
 
+    // Intercept slash commands and execute their action
+    if (text.startsWith("/")) {
+      const cmdName = text.slice(1).split(/\s+/)[0].toLowerCase();
+      const match = commands().find(
+        (c) => c.value.toLowerCase() === cmdName || c.label.toLowerCase() === cmdName
+      );
+      if (match?.action) {
+        history.append({ input: text });
+        setValue("");
+        input?.clear();
+        match.action();
+        return;
+      }
+    }
+
     history.append({ input: text });
     props.onSubmit?.(text);
     setValue("");
@@ -140,9 +155,15 @@ export function Prompt(props: PromptProps) {
       <Autocomplete
         options={commands()}
         onSelect={(option) => {
-          setValue(`/${option.value} `);
-          input?.setText(`/${option.value} `);
-          input?.gotoBufferEnd();
+          if (option.action) {
+            // Action was already called by autocomplete — clear input
+            setValue("");
+            input?.clear();
+          } else {
+            setValue(`/${option.value} `);
+            input?.setText(`/${option.value} `);
+            input?.gotoBufferEnd();
+          }
         }}
         ref={(r) => (autocomplete = r)}
       />
