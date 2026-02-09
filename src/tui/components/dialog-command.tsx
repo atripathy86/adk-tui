@@ -6,6 +6,8 @@ import { useTheme, DEFAULT_THEMES } from "../context/theme";
 import { DialogConnect } from "./dialog-connect";
 import { DialogApp } from "./dialog-app";
 import { DialogSessionList } from "./dialog-session-list";
+import { DialogHelp } from "./dialog-help";
+import { DialogStatus } from "./dialog-status";
 import { useSync } from "../context/sync";
 import { useSession } from "../context/session";
 import { useRoute } from "../context/route";
@@ -201,6 +203,48 @@ export function useBuiltInCommands() {
         } catch {
           toast.error("Failed to copy transcript");
         }
+      },
+    },
+    {
+      id: "session:delete",
+      title: "/delete",
+      category: "Session",
+      description: "Delete current session",
+      action: async () => {
+        log("Executing /delete action");
+        dialog.clear();
+        const sessionId = sync.data.currentSessionId;
+        if (!sessionId) {
+          toast.warning("No active session");
+          return;
+        }
+        try {
+          await session.delete(sessionId);
+          toast.success("Session deleted");
+          route.goHome();
+        } catch {
+          toast.error("Failed to delete session");
+        }
+      },
+    },
+    {
+      id: "status",
+      title: "/status",
+      category: "Application",
+      description: "View connection status",
+      action: () => {
+        log("Executing /status action");
+        dialog.replace(() => <DialogStatus />);
+      },
+    },
+    {
+      id: "help",
+      title: "/help",
+      category: "Application",
+      description: "Show help and keybindings",
+      action: () => {
+        log("Executing /help action");
+        dialog.replace(() => <DialogHelp />);
       },
     },
     {
