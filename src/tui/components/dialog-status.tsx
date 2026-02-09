@@ -61,6 +61,12 @@ export function DialogStatus() {
             <text fg={theme.success}>Connected</text>
           </Show>
         </box>
+        <box flexDirection="row" gap={1}>
+          <text fg={theme.textMuted}>Mode:</text>
+          <text fg={sync.data.config.streaming ? theme.success : theme.secondary}>
+            {sync.data.config.streaming ? "Streaming (SSE)" : "Non-streaming"}
+          </text>
+        </box>
       </box>
 
       <text fg={theme.text} bold>

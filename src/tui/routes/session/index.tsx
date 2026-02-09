@@ -1,7 +1,7 @@
 import { Show, For, createMemo, createEffect } from "solid-js";
 import { useTheme } from "../../context/theme";
 import { useKeybind } from "../../context/keybind";
-import { useSync } from "../../context/sync";
+import { useSync, useSyncActions } from "../../context/sync";
 import { useSession } from "../../context/session";
 import { useRoute } from "../../context/route";
 import { useToast } from "../../ui/toast";
@@ -64,6 +64,7 @@ function Header(props: { sessionId: string }) {
 function Timeline(props: { sessionId: string }) {
   const { theme } = useTheme();
   const sync = useSync();
+  const syncActions = useSyncActions();
 
   const messages = createMemo(() => {
     return sync.data.messages[props.sessionId] ?? [];
@@ -73,11 +74,17 @@ function Timeline(props: { sessionId: string }) {
     return sync.data.sessionStatus[props.sessionId] ?? { type: "idle" };
   });
 
+  // Streaming event from the dedicated signal (bypasses store array reactivity)
+  const streamingEvent = () => {
+    const se = syncActions.streamingEvent();
+    return se?.sessionId === props.sessionId ? se.event : null;
+  };
+
   return (
-    <scrollbox flexGrow={1} paddingLeft={1} paddingRight={1} paddingTop={1}>
+    <scrollbox flexGrow={1} paddingLeft={1} paddingRight={1} paddingTop={1} stickyScroll={true} stickyStart="bottom">
       <box flexDirection="column">
         <Show
-          when={messages().length > 0}
+          when={messages().length > 0 || streamingEvent()}
           fallback={
             <box
               flexGrow={1}
@@ -94,9 +101,13 @@ function Timeline(props: { sessionId: string }) {
           <For each={messages()}>
             {(event) => <Message event={event} />}
           </For>
+
+          <Show when={streamingEvent()}>
+            <Message event={streamingEvent()!} />
+          </Show>
         </Show>
 
-        <Show when={status().type === "busy"}>
+        <Show when={status().type === "busy" && !streamingEvent()}>
           <box flexDirection="row" gap={1} marginTop={1}>
             <text fg={theme.textMuted}>●</text>
             <text fg={theme.textMuted}>Thinking...</text>

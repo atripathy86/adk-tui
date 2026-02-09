@@ -1,291 +1,161 @@
 # ADK TUI
 
-A terminal user interface (TUI) client for ADK (Agent Development Kit) servers, built using the same architecture and look-and-feel as [OpenCode](https://github.com/anomalyco/opencode).
+A terminal user interface for [ADK](https://google.github.io/adk-docs/) (Agent Development Kit) servers, built with [SolidJS](https://www.solidjs.com/) and [OpenTUI](https://github.com/anomalyco/opentui). Inspired by the [OpenCode](https://github.com/anomalyco/opencode) TUI.
 
-## Overview
+## Features
 
-ADK TUI provides a rich terminal-based interface for interacting with ADK agents. It connects to any ADK webserver endpoint and allows you to manage sessions, run agents, and view results - all from your terminal.
+- **Chat with ADK agents** — send messages and stream responses in real time
+- **Session management** — create, list, switch, and delete sessions
+- **Streaming & non-streaming** — SSE streaming with automatic fallback to `/run`
+- **Command palette** — fuzzy-searchable commands via `Ctrl+P` or `/` autocomplete
+- **32 built-in themes** — switch on the fly with `/theme`
+- **Clipboard integration** — copy messages, transcripts, or selected text (OSC52 + native)
+- **Leader key chords** — Vim-style `Ctrl+X` leader key for quick access
+- **Artifacts viewer** — browse agent-generated artifacts
 
-## Current Status
-
-**Version**: 0.0.1 (Prototype)
-
-### What's Working
-
-- **TUI Rendering Engine**: Full terminal UI powered by `@opentui/solid` and SolidJS
-- **ADK Server Connection**: Connects to ADK webserver (set via `/connect` command)
-- **App Discovery**: Fetches and displays available apps from the `/list-apps` endpoint
-- **Theme System**: 32 built-in themes with theme switcher
-- **Command Palette**: `Ctrl+P` opens searchable command palette
-- **Keybind System**: Full keyboard shortcut support with leader key
-- **Dialog System**: Modal dialogs with fuzzy search filtering
-- **Dark/Light Mode**: Automatic terminal background detection
-- **Logo Display**: Custom ADK ASCII art branding
-
-### Project Structure
-
-```
-adk-tui/
-├── src/
-│   ├── index.tsx              # Entry point
-│   ├── sdk/
-│   │   └── client.ts          # ADK API client
-│   ├── util/
-│   │   └── keybind.ts         # Keybind parsing utilities
-│   └── tui/
-│       ├── client/
-│       │   └── app.tsx        # Main application component
-│       ├── components/
-│       │   ├── logo.tsx       # ADK logo component
-│       │   └── dialog-command.tsx  # Command palette
-│       ├── context/
-│       │   ├── theme.tsx      # Theme provider & color system
-│       │   ├── theme/         # 32 theme JSON files
-│       │   ├── sdk.tsx        # SDK context provider
-│       │   ├── sync.tsx       # State synchronization & keybind config
-│       │   ├── kv.tsx         # Key-value storage
-│       │   ├── keybind.tsx    # Keyboard shortcut handling
-│       │   ├── command.tsx    # Command palette provider
-│       │   └── helper.tsx     # Context utilities
-│       └── ui/
-│           ├── dialog.tsx     # Modal dialog system
-│           └── dialog-select.tsx  # Searchable select dialog
-├── package.json
-├── tsconfig.json
-├── NextSteps.md               # Development roadmap
-└── test-sdk.ts                # SDK connection test
-```
-
-## Installation
-
-### Prerequisites
-
-- [Bun](https://bun.sh/) v1.0+ (JavaScript runtime)
-- A running ADK server endpoint
-
-### Setup
+## Quick Start
 
 ```bash
-# Clone or copy the adk-tui directory
-cd adk-tui
-
-# Install dependencies
+# Prerequisites: Bun v1.0+
 bun install
-
-# Run in development mode
-bun run dev
-
-# Build standalone binary
 bun run build
-```
-
-## Development Notes
-
-- The build uses Bun + Babel (see build.ts and scripts/solid-plugin.ts). JSX is transformed by babel-preset-solid with moduleName set to @opentui/solid.
-- TypeScript is configured with noEmit, so VSCode/tsc type checks are separate from the Bun build pipeline.
-- Keep jsxImportSource set to @opentui/solid in tsconfig.json so VSCode picks up OpenTUI’s JSX intrinsic elements and props.
-
-## Usage
-
-### Running the TUI
-
-```bash
-# Run compiled binary
-./adk-tui
-
-# Run and connect to a server immediately
 ./adk-tui http://localhost:8087
+```
 
-# Or run in development mode
+Or in development mode:
+
+```bash
 bun run dev
-```
-
-### Debug Mode
-
-To enable detailed logging for troubleshooting:
-
-```bash
-# Enable debug logging
-ADK_TUI_DEBUG=1 ./adk-tui
-
-# View debug logs (in a separate terminal)
-tail -f /tmp/adk-tui-debug.log
-```
-
-Debug logs include:
-- Terminal and environment information
-- Component rendering lifecycle
-- TTY status checks
-- Initialization flow
-- Error details
-
-### Testing SDK Connection
-
-```bash
-bun run test-sdk.ts
-```
-
-Expected output:
-```
-Testing ADK Client connection...
-Successfully fetched apps: [ "adk_cli", "hello_agent" ]
 ```
 
 ## Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+P` | Open command palette |
-| `Ctrl+C` | Quit application |
-| `Ctrl+X` | Leader key (prefix for compound shortcuts) |
-| `Ctrl+X` then `t` | Open theme switcher |
-| `Ctrl+X` then `s` | Open session list (planned) |
-| `Ctrl+X` then `n` | New session (planned) |
-| `Escape` | Close current dialog |
+| `Ctrl+P` | Command palette |
+| `Ctrl+C` | Quit |
+| `Ctrl+X` | Leader key |
+| `<leader>a` | Select app |
+| `<leader>s` | Session list |
+| `<leader>n` | New session |
+| `<leader>d` | Delete session |
+| `<leader>t` | Switch theme |
+| `<leader>i` | Status info |
+| `<leader>y` | Copy last assistant message |
+| `<leader>c` | Copy full transcript |
+| `Escape` | Close dialog |
 
-### Command Palette
+## Commands
 
-Press `Ctrl+P` to open the command palette. Available commands:
+| Command | Description |
+|---------|-------------|
+| `/app` | Select ADK app |
+| `/sessions` | Switch between sessions |
+| `/new` | Start new session |
+| `/delete` | Delete current session |
+| `/connect` | Connect to ADK server |
+| `/copy` | Copy last assistant message |
+| `/copy-all` | Copy full session transcript |
+| `/theme` | Switch color theme |
+| `/status` | View connection and session info |
+| `/streaming` | Toggle streaming/non-streaming mode |
+| `/help` | Show help and keybindings |
+| `/quit` | Exit application |
 
-- **Switch Theme** - Opens theme picker with 32 themes
-- **Quit** - Exit the application
+See [Commands.md](./Commands.md) for a detailed comparison with OpenCode commands.
 
-Type to fuzzy-search commands.
+## Streaming
 
-## Configuration
+ADK TUI supports both response modes:
 
-### Changing the ADK Server Endpoint
+| Mode | Endpoint | Behavior |
+|------|----------|----------|
+| **Streaming** (default) | `POST /run_sse` | Server-Sent Events; responses appear incrementally |
+| **Non-streaming** | `POST /run` | Blocking JSON; all events arrive at once |
 
-Use the `/connect` command in the command palette to set the server URL. The selected URL is saved to your config at `~/.config/adk-tui/config.json` and used on next launch.
+Toggle with `/streaming`. If SSE fails, the client automatically falls back to `/run`.
 
-You can also pass a server URL as the first CLI argument to connect immediately:
+## ADK API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/list-apps` | GET | Discover available apps |
+| `/apps/{app}/users/{user}/sessions` | GET/POST | List or create sessions |
+| `/apps/{app}/users/{user}/sessions/{id}` | GET/DELETE | Get or delete a session |
+| `/run` | POST | Run agent (non-streaming) |
+| `/run_sse` | POST | Run agent (SSE streaming) |
+| `/apps/{app}/users/{user}/sessions/{id}/artifacts` | GET | List artifacts |
+
+## Project Structure
+
+```
+src/
+├── index.tsx                           # Entry point
+├── config/index.ts                     # Config file (~/.config/adk-tui)
+├── sdk/
+│   ├── client.ts                       # ADK API client (REST + SSE)
+│   └── types.ts                        # TypeScript types from ADK OpenAPI
+├── tui/
+│   ├── client/app.tsx                  # Root app component & providers
+│   ├── components/
+│   │   ├── dialog-app.tsx              # App selector
+│   │   ├── dialog-artifacts.tsx        # Artifacts browser
+│   │   ├── dialog-command.tsx          # Command palette
+│   │   ├── dialog-connect.tsx          # Server connection
+│   │   ├── dialog-help.tsx             # Help & keybindings
+│   │   ├── dialog-session-list.tsx     # Session list
+│   │   ├── dialog-status.tsx           # Status panel
+│   │   ├── logo.tsx                    # ASCII logo
+│   │   └── prompt/                     # Chat input (autocomplete, history)
+│   ├── context/
+│   │   ├── session.tsx                 # Session CRUD + message sending
+│   │   ├── sync.tsx                    # Central state store
+│   │   ├── sdk.tsx                     # SDK provider
+│   │   ├── route.tsx                   # Client-side routing
+│   │   ├── theme.tsx                   # Theme system (32 themes)
+│   │   ├── keybind.tsx                 # Keyboard shortcut handling
+│   │   ├── command.tsx                 # Command registration
+│   │   ├── kv.tsx                      # Key-value storage
+│   │   └── helper.tsx                  # Context utilities
+│   ├── routes/
+│   │   ├── home.tsx                    # Home screen
+│   │   └── session/
+│   │       ├── index.tsx               # Session view (chat timeline)
+│   │       └── message.tsx             # Message rendering (text, tool calls)
+│   ├── ui/                             # Reusable UI primitives
+│   │   ├── dialog.tsx                  # Modal dialog system
+│   │   ├── dialog-select.tsx           # Searchable select
+│   │   ├── dialog-alert.tsx            # Alert dialog
+│   │   ├── dialog-confirm.tsx          # Confirmation dialog
+│   │   ├── toast.tsx                   # Toast notifications
+│   │   ├── spinner.tsx                 # Loading spinner
+│   │   └── error-boundary.tsx          # Error boundary
+│   └── util/
+│       └── clipboard.ts               # Clipboard (OSC52 + native)
+```
+
+## Debug Mode
 
 ```bash
-./adk-tui http://localhost:8087
+ADK_TUI_DEBUG=1 ./adk-tui
+
+# In another terminal:
+tail -f /tmp/adk-tui-debug.log
 ```
 
-### Changing the Default Theme
+## Development Notes
 
-Edit `src/tui/context/sync.tsx` and modify the default theme:
-
-```typescript
-data: {
-  config: {
-    theme: "dracula"  // or any theme name from context/theme/
-  }
-}
-```
-
-### Customizing Keybinds
-
-Edit `src/tui/context/sync.tsx` and modify the `defaultKeybinds` object:
-
-```typescript
-const defaultKeybinds: KeybindsConfig = {
-  leader: "ctrl+x",
-  quit: "ctrl+c",
-  command_palette: "ctrl+p",
-  theme_list: "<leader>t",
-  // ... add more keybinds
-};
-```
-
-### Available Themes
-
-| Theme | Description |
-|-------|-------------|
-| `opencode` | Default OpenCode theme |
-| `dracula` | Popular dark theme |
-| `catppuccin` | Soothing pastel theme |
-| `catppuccin-frappe` | Catppuccin variant |
-| `catppuccin-macchiato` | Catppuccin variant |
-| `nord` | Arctic, north-bluish color palette |
-| `gruvbox` | Retro groove color scheme |
-| `tokyonight` | Clean dark theme inspired by Tokyo |
-| `rosepine` | Soho vibes |
-| `solarized` | Precision colors for machines and people |
-| `github` | GitHub-inspired theme |
-| `monokai` | Sublime Text classic |
-| `one-dark` | Atom One Dark |
-| `material` | Material Design colors |
-| `ayu` | Simple, bright colors |
-| `vesper` | Minimal dark theme |
-| `vercel` | Vercel-inspired theme |
-| ... | 15 more themes available |
-
-## ADK API Endpoints Used
-
-The client currently uses these ADK endpoints:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/list-apps` | GET | List available ADK applications |
-| `/apps/{app}/users/{user}/sessions` | GET | List sessions (planned) |
-| `/run` | POST | Run agent (planned) |
-| `/run_sse` | POST | Run agent with SSE streaming (planned) |
-
-## Architecture
-
-ADK TUI follows the same client-server architecture as OpenCode:
-
-```
-┌─────────────────┐     HTTP/REST      ┌─────────────────┐
-│                 │ ◄────────────────► │                 │
-│   ADK TUI       │                    │   ADK Server    │
-│   (Terminal)    │     /list-apps     │   (Backend)     │
-│                 │     /run           │                 │
-│  @opentui/solid │     /run_sse       │                 │
-│  + SolidJS      │                    │                 │
-└─────────────────┘                    └─────────────────┘
-```
-
-### Key Technologies
-
-- **@opentui/core**: Terminal rendering primitives (Box, Text, etc.)
-- **@opentui/solid**: SolidJS bindings for OpenTUI
-- **SolidJS**: Reactive UI framework
-- **Bun**: JavaScript runtime and bundler
-- **Zod**: Runtime type validation
-- **remeda**: Utility functions
-- **fuzzysort**: Fuzzy search for command palette
+- Build uses Bun + esbuild with `babel-preset-solid` for JSX transformation
+- `jsxImportSource` is set to `@opentui/solid` in tsconfig.json
+- TypeScript is `noEmit` — type checking is separate from the build
 
 ## Troubleshooting
 
-### TUI crashes immediately
+**TUI crashes immediately** — use a modern terminal (iTerm2, Kitty, Alacritty, Windows Terminal) that supports Kitty keyboard protocol and 24-bit color.
 
-Check that your terminal supports the required escape sequences. The TUI uses:
-- Kitty keyboard protocol
-- 24-bit color (truecolor)
-- Mouse tracking
+**Cannot connect** — verify the ADK server: `curl http://your-server:8087/list-apps`
 
-Try running in a modern terminal like:
-- iTerm2 (macOS)
-- Kitty
-- Alacritty
-- Windows Terminal
-
-### Cannot connect to ADK server
-
-1. Verify the server is running: `curl http://your-adk-server:8087/list-apps`
-2. Check network connectivity
-3. Ensure no firewall is blocking the connection
-
-### Theme colors look wrong
-
-Your terminal may not support 24-bit color. Check with:
-```bash
-echo $COLORTERM  # Should output "truecolor" or "24bit"
-```
-
-## Roadmap
-
-See [NextSteps.md](./NextSteps.md) for the detailed development roadmap. Key upcoming features:
-
-1. **Chat Prompt Input** - Multi-line text input with history
-2. **Session Management** - Create, list, switch between sessions
-3. **Agent Execution** - Send messages and stream responses
-4. **Chat Timeline** - Display conversation history
-5. **Artifacts Viewer** - View agent-generated artifacts
+**Theme colors wrong** — check `echo $COLORTERM` outputs `truecolor` or `24bit`.
 
 ## License
 
@@ -293,6 +163,5 @@ MIT
 
 ## Acknowledgments
 
-- Built on the [OpenCode](https://github.com/anomalyco/opencode) TUI architecture
-- Uses [OpenTUI](https://github.com/anomalyco/opentui) for terminal rendering
-- Theme files adapted from OpenCode's theme system
+- [OpenCode](https://github.com/anomalyco/opencode) — TUI architecture and theme system
+- [OpenTUI](https://github.com/anomalyco/opentui) — Terminal rendering engine

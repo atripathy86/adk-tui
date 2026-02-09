@@ -15,6 +15,7 @@ Comparison of OpenCode TUI commands vs ADK TUI implementation.
 | `/copy-all` | _(no equivalent)_ | Clipboard | Copy full session transcript | `<leader>c` |
 | `/theme` | `/themes` | Application | Switch color theme | `<leader>t` |
 | `/status` | `/status` | Application | View connection and session info | `<leader>i` |
+| `/streaming` | _(no equivalent)_ | Application | Toggle streaming/non-streaming mode | - |
 | `/help` | `/help` | Application | Show help and keybindings | - |
 | `/quit` | `/exit` (`/quit`, `/q`) | Application | Exit application | `ctrl+c` |
 
@@ -61,6 +62,21 @@ Comparison of OpenCode TUI commands vs ADK TUI implementation.
 |------------------|-------------------|
 | `/agents` | `/app` - ADK "agents" are apps, selected via `/app`. |
 | `/export` | `/copy-all` - Copies full transcript to clipboard. File export could be added later. |
+
+## Streaming vs Non-Streaming
+
+ADK provides two endpoints for agent execution:
+
+| Mode | Endpoint | Behavior |
+|------|----------|----------|
+| **Streaming** (default) | `POST /run_sse` | Server-Sent Events stream. Events arrive incrementally as the agent processes. Text parts are consolidated into a single message per author. Shows a partial indicator while streaming. |
+| **Non-streaming** | `POST /run` | Blocking JSON response. Returns `Event[]` all at once. All events are added to the timeline when the response completes. |
+
+Both endpoints accept the same `AgentRunRequest` body. The `streaming` field in the request is metadata; the endpoint URL determines the behavior.
+
+**Fallback:** If SSE streaming fails (e.g., server doesn't support it), the client automatically retries with the non-streaming `/run` endpoint.
+
+Toggle via `/streaming` command or in the command palette.
 
 ## Command Architecture
 

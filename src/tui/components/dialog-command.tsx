@@ -8,7 +8,7 @@ import { DialogApp } from "./dialog-app";
 import { DialogSessionList } from "./dialog-session-list";
 import { DialogHelp } from "./dialog-help";
 import { DialogStatus } from "./dialog-status";
-import { useSync } from "../context/sync";
+import { useSync, useSyncActions } from "../context/sync";
 import { useSession } from "../context/session";
 import { useRoute } from "../context/route";
 import { Clipboard } from "../util/clipboard";
@@ -49,6 +49,7 @@ function extractEventText(event: Event): string {
 export function useBuiltInCommands() {
   const dialog = useDialog();
   const sync = useSync();
+  const syncActions = useSyncActions();
   const session = useSession();
   const route = useRoute();
   const toast = useToast();
@@ -235,6 +236,19 @@ export function useBuiltInCommands() {
       action: () => {
         log("Executing /status action");
         dialog.replace(() => <DialogStatus />);
+      },
+    },
+    {
+      id: "streaming:toggle",
+      title: "/streaming",
+      category: "Application",
+      description: `Toggle streaming mode (currently ${sync.data.config.streaming ? "ON" : "OFF"})`,
+      action: () => {
+        log("Executing /streaming action");
+        dialog.clear();
+        const current = sync.data.config.streaming;
+        syncActions.setStreaming(!current);
+        toast.info(`Streaming ${!current ? "enabled" : "disabled"}`);
       },
     },
     {

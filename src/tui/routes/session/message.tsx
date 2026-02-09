@@ -11,9 +11,14 @@ function formatTimestamp(timestamp: number): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function ToolCall(props: { call: FunctionCall }) {
+function ToolCall(props: { call: FunctionCall; allParts: Part[] }) {
   const { theme } = useTheme();
   const [expanded, setExpanded] = createSignal(false);
+
+  const hasResponse = () =>
+    props.allParts.some(
+      (p) => p.functionResponse?.name === props.call.name
+    );
 
   return (
     <box flexDirection="column" marginTop={1}>
@@ -22,11 +27,8 @@ function ToolCall(props: { call: FunctionCall }) {
         gap={1}
         onMouseUp={() => setExpanded(!expanded())}
       >
-        <text fg={theme.textMuted}>
-          {expanded() ? "▼" : "▶"}
-        </text>
-        <text fg={theme.warning}>
-          ⚙ {props.call.name ?? "function"}
+        <text fg={hasResponse() ? theme.success : theme.warning}>
+          {hasResponse() ? "✓" : "▶"} ⚙ {props.call.name ?? "function"}
         </text>
       </box>
       <Show when={expanded() && props.call.args}>
@@ -45,7 +47,7 @@ function ToolCall(props: { call: FunctionCall }) {
   );
 }
 
-function PartContent(props: { part: Part }) {
+function PartContent(props: { part: Part; allParts: Part[] }) {
   const { theme } = useTheme();
 
   return (
@@ -55,7 +57,7 @@ function PartContent(props: { part: Part }) {
       </Show>
 
       <Show when={props.part.functionCall}>
-        <ToolCall call={props.part.functionCall!} />
+        <ToolCall call={props.part.functionCall!} allParts={props.allParts} />
       </Show>
 
       <Show when={props.part.functionResponse}>
@@ -126,7 +128,7 @@ export function UserMessage(props: MessageProps) {
       </box>
       <Show when={content()?.parts}>
         <For each={content()!.parts}>
-          {(part) => <PartContent part={part} />}
+          {(part) => <PartContent part={part} allParts={content()!.parts!} />}
         </For>
       </Show>
     </box>
@@ -155,7 +157,7 @@ export function AssistantMessage(props: MessageProps) {
       </box>
       <Show when={content()?.parts}>
         <For each={content()!.parts}>
-          {(part) => <PartContent part={part} />}
+          {(part) => <PartContent part={part} allParts={content()!.parts!} />}
         </For>
       </Show>
       <Show when={props.event.errorMessage}>

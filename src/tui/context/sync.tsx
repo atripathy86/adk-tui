@@ -1,4 +1,4 @@
-import { createContext, useContext, JSX } from "solid-js";
+import { createContext, useContext, createSignal, JSX } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import type { Session, Event } from "../../sdk/types";
 
@@ -32,6 +32,7 @@ interface SyncState {
     config: {
       theme?: string;
       keybinds?: KeybindsConfig;
+      streaming: boolean;
     };
     // Current app and user
     currentApp: string | null;
@@ -48,6 +49,11 @@ interface SyncState {
   };
 }
 
+export interface StreamingEventValue {
+  sessionId: string;
+  event: Event;
+}
+
 const SyncContext = createContext<{
   state: SyncState;
   setCurrentApp: (appName: string | null) => void;
@@ -59,6 +65,9 @@ const SyncContext = createContext<{
   addMessage: (sessionId: string, event: Event) => void;
   updateMessage: (sessionId: string, event: Event) => void;
   setSessionStatus: (sessionId: string, status: SessionStatus) => void;
+  setStreaming: (streaming: boolean) => void;
+  streamingEvent: () => StreamingEventValue | null;
+  setStreamingEvent: (sessionId: string, event: Event | null) => void;
 }>();
 
 export function SyncProvider(props: { children: JSX.Element }) {
@@ -79,6 +88,8 @@ export function SyncProvider(props: { children: JSX.Element }) {
     history_next: "down",
   };
 
+  const [streamingEvent, setStreamingEventSignal] = createSignal<StreamingEventValue | null>(null);
+
   const [state, setState] = createStore<SyncState>({
     ready: true,
     status: "complete",
@@ -86,6 +97,7 @@ export function SyncProvider(props: { children: JSX.Element }) {
       config: {
         theme: "opencode",
         keybinds: defaultKeybinds,
+        streaming: true,
       },
       currentApp: null,
       userId: "default-user",
@@ -168,10 +180,21 @@ export function SyncProvider(props: { children: JSX.Element }) {
     setSessionStatus(sessionId: string, status: SessionStatus) {
       setState("data", "sessionStatus", sessionId, status);
     },
+
+    setStreaming(streaming: boolean) {
+      setState("data", "config", "streaming", streaming);
+    },
   };
 
   return (
-    <SyncContext.Provider value={{ state, ...actions }}>
+    <SyncContext.Provider value={{
+      state,
+      ...actions,
+      streamingEvent,
+      setStreamingEvent(sessionId: string, event: Event | null) {
+        setStreamingEventSignal(event ? { sessionId, event } : null);
+      },
+    }}>
       {props.children}
     </SyncContext.Provider>
   );
